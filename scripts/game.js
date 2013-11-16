@@ -5,6 +5,8 @@ var score = 0;
 
 var scene, renderer, container, cube, camera, plane, projector, clock, material_depth;
 
+var background;
+
 var SCREEN_WIDTH = window.innerWidth,
     SCREEN_HEIGHT = window.innerHeight;
 
@@ -128,11 +130,21 @@ function setupModels() {
     
     // create background
     var planeTexture = new THREE.ImageUtils.loadTexture('assets/airplane0.png');
-
-    var planeMaterial = new THREE.MeshBasicMaterial({ map: planeTexture, transparent: true, side: THREE.DoubleSide  });
+    var planeMaterial = new THREE.MeshBasicMaterial({ map: planeTexture, transparent:true  });
     planeTexture.needsUpdate = true;
     plane = new THREE.Mesh(new THREE.PlaneGeometry(10, 10, 10, 10), planeMaterial);
     scene.add(plane);
+
+    var backgroundTexture = new THREE.ImageUtils.loadTexture('assets/tilebackground.png');
+    backgroundTexture.wrapS = THREE.RepeatWrapping;
+    backgroundTexture.wrapT = THREE.RepeatWrapping;
+    backgroundTexture.repeat.set(100, 100);
+
+    var backgroundMaterial = new THREE.MeshBasicMaterial({ map: backgroundTexture });
+    background = new THREE.Mesh(new THREE.PlaneGeometry(SCREEN_WIDTH, SCREEN_HEIGHT, 128, 128), backgroundMaterial);
+    background.position.z = -10;
+    background.texture = backgroundTexture;
+    scene.add(background);
 }
 
 function mainGameLoop() {
@@ -162,9 +174,41 @@ function render() {
 function update() {
     var delta = clock.getDelta();
 
+    updateBackground(delta);
     updateBullets(delta);
     updatePlayerShip(delta);
     updateScore();
+}
+
+var clouds = [];
+var cloudMaterial = new THREE.MeshBasicMaterial({ map: new THREE.ImageUtils.loadTexture('assets/cloud.png'), transparent: true, opacity: 0.4 });
+var cloudGeometry = new THREE.PlaneGeometry(10,10);
+function updateBackground(delta) {
+    background.texture.offset.y += delta * 5;
+
+
+    for (var i = clouds.length - 1; i >= 0; i--) {
+        var cloud = clouds[i];
+        if (cloud.position.y < -HEIGHT_HALF ||  cloud.position.y > HEIGHT_HALF) {
+            clouds.splice(i, 1);
+            scene.remove(cloud);
+            continue;
+        }
+        cloud.translateY(-delta * 10);
+    }
+
+    while (clouds.length < 30) {
+        var cloud = new THREE.Mesh(cloudGeometry, cloudMaterial);
+        
+        cloud.layer = Math.round(Math.random() * 3);
+        cloud.position.set(Math.round(Math.random() * SCREEN_WIDTH) - WIDTH_HALF, Math.round(Math.random() * SCREEN_HEIGHT) - HEIGHT_HALF, cloud.layer);
+        cloud.scale.x = 5* cloud.layer;
+        cloud.scale.y = 5* cloud.layer;
+
+        clouds.push(cloud);
+        scene.add(cloud);
+    }
+
 }
 
 function updateBullets(delta) {
@@ -285,5 +329,11 @@ function onWindowResize(event) {
     HEIGHT_HALF = SCREEN_HEIGHT / 2;
     
     renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    camera.left =WIDTH_HALF / -2;
+    camera.right = WIDTH_HALF / 2;
+    camera.top = HEIGHT_HALF / 2;
+    camera.bottom = HEIGHT_HALF / -2;
+
     camera.updateProjectionMatrix();
 }
