@@ -3,7 +3,7 @@
 
 var score = 0;
 
-var scene, renderer, container, cube, camera, plane, projector, clock;
+var scene, renderer, container, cube, camera, plane, projector, clock, material_depth;
 
 var SCREEN_WIDTH = window.innerWidth,
     SCREEN_HEIGHT = window.innerHeight;
@@ -12,6 +12,12 @@ var WIDTH_HALF = SCREEN_WIDTH / 2,
     HEIGHT_HALF = SCREEN_HEIGHT / 2;
 
 const bulletSpeed = 100;
+
+const maxLayerChangeSpeed = 100;
+var lastLayerChange = Date.now();
+
+// need a better DOF setup, but will work on mechanics first
+var postprocessing = { enabled: false };
 
 var Layers = function () {
     return {
@@ -63,6 +69,47 @@ function init() {
     });
 
     clock = new THREE.Clock();
+
+
+    material_depth = new THREE.MeshDepthMaterial();
+
+    initPostprocessing();
+}
+
+function initPostprocessing() {
+
+    postprocessing.scene = new THREE.Scene();
+
+    postprocessing.camera = new THREE.OrthographicCamera(window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, -10000, 10000);
+    postprocessing.camera.position.z = 100;
+
+    postprocessing.scene.add(postprocessing.camera);
+
+    var pars = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat };
+    postprocessing.rtTextureDepth = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, pars);
+    postprocessing.rtTextureColor = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, pars);
+
+    var bokeh_shader = THREE.BokehShader;
+
+    postprocessing.bokeh_uniforms = THREE.UniformsUtils.clone(bokeh_shader.uniforms);
+
+    postprocessing.bokeh_uniforms["tColor"].value = postprocessing.rtTextureColor;
+    postprocessing.bokeh_uniforms["tDepth"].value = postprocessing.rtTextureDepth;
+    postprocessing.bokeh_uniforms["focus"].value = 1.1;
+    postprocessing.bokeh_uniforms["aspect"].value = window.innerWidth / window.innerHeight;
+
+    postprocessing.materialBokeh = new THREE.ShaderMaterial({
+
+        uniforms: postprocessing.bokeh_uniforms,
+        vertexShader: bokeh_shader.vertexShader,
+        fragmentShader: bokeh_shader.fragmentShader
+
+    });
+
+    postprocessing.quad = new THREE.Mesh(new THREE.PlaneGeometry(window.innerWidth, window.innerHeight), postprocessing.materialBokeh);
+    postprocessing.quad.position.z = -500;
+    postprocessing.scene.add(postprocessing.quad);
+
 }
 
 function setupModels() {
@@ -89,11 +136,28 @@ function setupModels() {
 }
 
 function mainGameLoop() {
+    requestAnimationFrame(mainGameLoop, renderer.domElement);
+    render();
     update();
-    renderer.render(scene, camera);
-    requestAnimationFrame(mainGameLoop);
-
 };
+
+function render() {
+
+    if (postprocessing.enabled) {
+        renderer.clear();
+        scene.overrideMaterial = null;
+        renderer.render(scene, camera, postprocessing.rtTextureColor, true);
+
+        scene.overrideMaterial = material_depth;
+        renderer.render(scene, camera, postprocessing.rtTextureDepth, true);
+        renderer.render(postprocessing.scene, postprocessing.camera);
+    }
+    else {
+        renderer.render(scene, camera);
+    }
+    
+
+}
 
 function update() {
     var delta = clock.getDelta();
@@ -147,6 +211,9 @@ function spawnBullet(creator, layer) {
     bullet.ray = new THREE.Ray(creator.position, new THREE.Vector3(0, 1, 0));
 
     bullet.layer = currentLayer;
+    bullet.scale.x = currentLayer;
+    bullet.scale.y = currentLayer;
+
     bullet.owner = creator;
     bullets.push(bullet);
     scene.add(bullet);
@@ -155,13 +222,15 @@ function spawnBullet(creator, layer) {
 
 }
 
-function updatePlayerShip() {
-    if (Key.isDown(Key.Q) && currentLayer != Layers.TOP)
-    {
-        currentLayer++;
-    }
-    if (Key.isDown(Key.E) && currentLayer != Layers.BOTTOM) {
-        currentLayer--;
+function updatePlayerShip(delta) {
+    if (Date.now() > lastLayerChange + maxLayerChangeSpeed) {
+        if (Key.isDown(Key.Q) && currentLayer != Layers.TOP) {
+            currentLayer++;
+        }
+        if (Key.isDown(Key.E) && currentLayer != Layers.BOTTOM) {
+            currentLayer--;
+        }
+        lastLayerChange = Date.now();
     }
 
     if (Key.isDown(Key.A)) {
