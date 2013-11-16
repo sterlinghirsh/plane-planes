@@ -1,14 +1,16 @@
 /// <reference path="three.js" />
 /// <reference path="jquery-2.0.3.js" />
 
+const windowMargin = 10;
+
 var score = 0;
 
 var scene, renderer, container, cube, camera, plane, projector, clock, material_depth;
 
 var background;
 
-var SCREEN_WIDTH = window.innerWidth,
-    SCREEN_HEIGHT = window.innerHeight;
+var SCREEN_WIDTH = $(window).innerWidth() - windowMargin,
+    SCREEN_HEIGHT = $(window).innerHeight() - windowMargin;
 
 var WIDTH_HALF = SCREEN_WIDTH / 2,
     HEIGHT_HALF = SCREEN_HEIGHT / 2;
@@ -322,15 +324,15 @@ function handleMouseMove(event) {
 
 function onWindowResize(event) {
 
-    SCREEN_WIDTH = window.innerWidth;
-    SCREEN_HEIGHT = window.innerHeight;
+    SCREEN_WIDTH = $(window).width() - windowMargin;
+    SCREEN_HEIGHT = $(window).height() - windowMargin;
 
     WIDTH_HALF = SCREEN_WIDTH / 2;
     HEIGHT_HALF = SCREEN_HEIGHT / 2;
     
     renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    camera.left =WIDTH_HALF / -2;
+    camera.left = WIDTH_HALF / -2;
     camera.right = WIDTH_HALF / 2;
     camera.top = HEIGHT_HALF / 2;
     camera.bottom = HEIGHT_HALF / -2;

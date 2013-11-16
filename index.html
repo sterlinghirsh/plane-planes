@@ -6,11 +6,14 @@
         <style>
             #canvas {
                 z-index: 3;
-                position: absolute;
-                top: 0px;
-                left: 0px;
-                margin: 0px;
+                margin: 0px auto;
                 padding: 0px;
+                width: 100%;
+            }
+
+            canvas {
+                margin: 3px auto;
+                display: block;
             }
 
             #scoreboard {
@@ -23,6 +26,10 @@
                 font-size: 16pt;
                 margin: 0px;
                 padding: 0px;
+            }
+
+            body {
+                margin: 0px;
             }
 
             * {
@@ -40,12 +47,9 @@
 
         <div id="canvas"></div>
         <div id="scoreboard">
-            Score <span id="score">0</span>
-            <br/>
-            Client x: <span id="clientx">0</span>
-            <br />
-            Client y: <span id="clienty">0</span>
-            <br />
+            Score <span id="score">0</span><br>
+            Client x: <span id="clientx">0</span><br>
+            Client y: <span id="clienty">0</span><br>
             FPS: <span id="fps">0</span>
         </div>
     </body>
