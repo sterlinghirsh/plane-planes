@@ -193,7 +193,16 @@ function update() {
     if (Math.random() <  0.01) {
         var maxX = WIDTH_HALF / 2 - 20;
         var randX = maxX - 2 * maxX * Math.random();
-        Enemy.spawn(new THREE.Vector3(randX, HEIGHT_HALF / 1.5, 2), new THREE.Vector3(0, -10, 0));
+        var randLayer = Math.random();
+        var layer;
+        if (randLayer < .33) {
+            layer = Layers.BOTTOM;
+        } else if (randLayer < .66) {
+            layer = Layers.MIDDLE;
+        } else {
+            layer = Layers.TOP;
+        }
+        Enemy.spawn(new THREE.Vector3(randX, HEIGHT_HALF / 1.5, layer), new THREE.Vector3(0, -10, 0));
     }
 
     Cloud.updateAll(delta);

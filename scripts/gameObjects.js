@@ -337,6 +337,7 @@ Enemy.spawn = function (position, direction) {
     enemy.position.copy(position);
 
     enemy.ray = new THREE.Ray(position, direction);
+    enemy.layer = position.z;
 
     enemy.addToScene();
     GameObject.prototype.update.call(enemy);
