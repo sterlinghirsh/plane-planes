@@ -27,10 +27,12 @@ var Layers = function () {
 }();
 
 var bgMusic;
+var globalState;
 
 
 function setup() {
 
+    globalState = new GlobalState();
     init();
     
     window.addEventListener('resize', onWindowResize, false);
@@ -70,6 +72,7 @@ function setup() {
 
 var stats;
 function init() {
+
     stats = new Stats();
     stats.setMode(0); // 0: fps, 1: ms
 
@@ -189,35 +192,37 @@ function render() {
 }
 
 function update() {
-
     if (playerCrashed) {
         document.getElementById('gameOver').style.display = "block";
     } else {
         var delta = clock.getDelta();
+        globalState.update();
         
-        // Change this for increased difficulty.
-        var enemySpawnChance = 0.01
-        if (Math.random() < enemySpawnChance) {
-            var maxX = WIDTH_HALF / 2 - 20;
-            var randX = maxX - 2 * maxX * Math.random();
-            var randLayer = Math.random();
-            var layer;
-            if (randLayer < .33) {
-                layer = Layers.BOTTOM;
-            } else if (randLayer < .66) {
-                layer = Layers.MIDDLE;
-            } else {
-                layer = Layers.TOP;
+        if (!globalState.paused) {
+            // Change this for increased difficulty.
+            var enemySpawnChance = 0.01
+            if (Math.random() < enemySpawnChance) {
+                var maxX = WIDTH_HALF / 2 - 20;
+                var randX = maxX - 2 * maxX * Math.random();
+                var randLayer = Math.random();
+                var layer;
+                if (randLayer < .33) {
+                    layer = Layers.BOTTOM;
+                } else if (randLayer < .66) {
+                    layer = Layers.MIDDLE;
+                } else {
+                    layer = Layers.TOP;
+                }
+                Enemy.spawn(new THREE.Vector3(randX, HEIGHT_HALF / 1.5, layer), new THREE.Vector3(0, -10, 0));
             }
-            Enemy.spawn(new THREE.Vector3(randX, HEIGHT_HALF / 1.5, layer), new THREE.Vector3(0, -10, 0));
-        }
 
-        Cloud.updateAll(delta);
-        background.update(delta);
-        Bullet.updateAll(delta);
-        Enemy.updateAll(delta);
-        player.update(delta);
-        updateScore();
+            Cloud.updateAll(delta);
+            background.update(delta);
+            Bullet.updateAll(delta);
+            Enemy.updateAll(delta);
+            player.update(delta);
+            updateScore();
+        }
     }
     stats.update();
 }
