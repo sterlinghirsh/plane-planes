@@ -14,9 +14,6 @@ var SCREEN_WIDTH,
 
 const bulletSpeed = 100;
 
-const maxLayerChangeSpeed = 100;
-var lastLayerChange = Date.now();
-
 // need a better DOF setup, but will work on mechanics first
 var postprocessing = { enabled: false };
 
@@ -100,13 +97,6 @@ function init() {
 
     setupModels();
 
-    $(document).click(function (button) {
-        button.preventDefault;
-        if (button.which === 1) {
-            Bullet.spawn(player, new THREE.Vector3(0,1,0));
-        }
-    });
-
     clock = new THREE.Clock();
 
 
@@ -153,6 +143,7 @@ function initPostprocessing() {
 
 function setupModels() {
 
+    /*
     cube = new THREE.Mesh(
             new THREE.CubeGeometry(10, 10, 10),
             new THREE.MeshLambertMaterial({ color: 0x00ff00 })
@@ -164,6 +155,7 @@ function setupModels() {
     pointLight.position.y = 50;
     pointLight.position.z = 130;
     scene.add(pointLight);
+    */
 
     player = new Player();
     player.addToScene();
@@ -175,9 +167,9 @@ function setupModels() {
 }
 
 function mainGameLoop() {
-    requestAnimationFrame(mainGameLoop, renderer.domElement);
     render();
     update();
+    requestAnimationFrame(mainGameLoop, renderer.domElement);
 };
 
 function render() {

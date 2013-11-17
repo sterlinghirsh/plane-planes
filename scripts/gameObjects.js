@@ -40,29 +40,100 @@ function Player() {
     this.material = new THREE.MeshBasicMaterial({ map: this.texture, transparent: true });
     this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(10, 10, 10, 10), this.material);
 
-    this.maxLayerChangeSpeed = 100;
-    this.lastLayerChange = Date.now();
     this.layer = Layers.MIDDLE;
-    this.speed = 1000.0;
+    this.speed = 100.0;
+
+    this.weaponCooldown = 200;
+    this.lastShotTime = 0;
+
+    this.up = false;
+    this.down = false;
+    this.left = false;
+    this.right = false;
+    this.firing = false;
+
+    this.spread = 0.1;
+
+    this.changingLayers = false;
+    this.layerChangeDirection = 0;
+
+
+    var that = this;
+
+    // Keycodes
+    var w = 87;
+    var a = 65;
+    var s = 83;
+    var d = 68;
+    var q = 81;
+    var e = 69;
+    var space = 32;
+
+    window.addEventListener('keydown', function(ev) {
+        switch(ev.keyCode) {
+            case w: that.up = true; break;
+            case s: that.down = true; break;
+            case a: that.left = true; break;
+            case d: that.right = true; break;
+            case space: that.firing = true; break;
+            case e: if (!that.changingLayers) {
+                        that.changingLayers = true;
+                        that.layerChangeDirection = -1;
+                    }
+                    break;
+            case q: if (!that.changingLayers) {
+                        that.changingLayers = true;
+                        that.layerChangeDirection = 1;
+                    }
+                    break;
+        }
+    });
+    
+    window.addEventListener('keyup', function(ev) {
+        switch(ev.keyCode) {
+            case w: that.up = false; break;
+            case s: that.down = false; break;
+            case a: that.left = false; break;
+            case d: that.right = false; break;
+            case space: that.firing = false; break;
+            case e: that.changingLayers = false; that.layerChangeDirection = 0; break;
+            case q: that.changingLayers = false; that.layerChangeDirection = 0; break;
+        }
+    });
 }
 
 Player.prototype = new GameObject();
 
 Player.prototype.update = function (delta) {
-    if (Date.now() > this.lastLayerChange + this.maxLayerChangeSpeed) {
-        if (Key.isDown(Key.Q) && this.layer != Layers.TOP) {
-            this.layer++;
-        }
-        if (Key.isDown(Key.E) && this.layer != Layers.BOTTOM) {
-            this.layer--;
-        }
-        this.lastLayerChange = Date.now();
+    if (this.layerChangeDirection > 0 && this.layer != Layers.TOP) {
+        this.layer++;
+        this.layerChangeDirection = 0;
+    }
+    if (this.layerChangeDirection < 0 && this.layer != Layers.BOTTOM) {
+        this.layer--;
+        this.layerChangeDirection = 0;
+    }
 
-        var distance = this.speed * delta;
-        if (Key.isDown(Key.W)) this.mesh.translateY(distance);
-        if (Key.isDown(Key.S)) this.mesh.translateY(-distance);
-        if (Key.isDown(Key.A)) this.mesh.translateX(-distance);
-        if (Key.isDown(Key.D)) this.mesh.translateX(distance);
+    var distance = this.speed * delta;
+
+    if (this.up && !this.down) {
+        this.mesh.translateY(distance);
+    } else if (this.down && !this.up) {
+        this.mesh.translateY(-distance);
+    }
+    
+    if (this.left && !this.right) {
+        this.mesh.translateX(-distance);
+    } else if (this.right && !this.left) {
+        this.mesh.translateX(distance);
+    }
+
+    var now = Date.now();
+
+    if (this.firing && now - this.lastShotTime >= this.weaponCooldown) {
+        var randX = -this.spread + 2 * Math.random() * this.spread;
+        Bullet.spawn(this, new THREE.Vector3(randX, 1, 0));
+        this.lastShotTime = now;
     }
 
     this.position.z = this.layer;
@@ -75,7 +146,7 @@ function Bullet() {
     this.texture = renderer.cache.getSet('bullet',THREE.ImageUtils.loadTexture('assets/bullet.png'));
     this.material = new THREE.MeshBasicMaterial({ map: this.texture, transparent: true });
     this.mesh = new THREE.Mesh(new THREE.SphereGeometry(2, 6, 6), this.material);
-    this.speed = 100;
+    this.speed = 100 + Math.random() * 20;
     bullets.push(this);
 }
 
@@ -105,6 +176,7 @@ Bullet.prototype.update = function (delta) {
     }
 
     this.position.y += this.speed * delta * this.ray.direction.y * this.layer;
+    this.position.x += this.speed * delta * this.ray.direction.x * this.layer;
     GameObject.prototype.update.call(this);
 }
 
@@ -135,6 +207,7 @@ Bullet.spawn = function (creator, direction, speed) {
     bullet.owner = creator;
 
     bullet.addToScene();
+    GameObject.prototype.update.call(bullet);
 }
 
 
