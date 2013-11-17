@@ -7,10 +7,6 @@ var score = 0;
 
 var scene, renderer, container, cube, camera, projector, clock, material_depth;
 
-var player;
-
-var background;
-
 var SCREEN_WIDTH,
     SCREEN_HEIGHT,
     WIDTH_HALF,
@@ -48,6 +44,7 @@ function setup() {
 
     mainGameLoop();
 }
+
 var stats;
 function init() {
     stats = new Stats();
@@ -66,6 +63,7 @@ function init() {
     projector = new THREE.Projector();
     renderer = new THREE.WebGLRenderer();
     renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+    renderer.cache = new MicroCache();
 
     camera = new THREE.OrthographicCamera(WIDTH_HALF / -2, WIDTH_HALF / 2, HEIGHT_HALF / 2, HEIGHT_HALF / -2, -500, 2000);
     camera.position.z = 10;
@@ -81,7 +79,7 @@ function init() {
     $(document).click(function (button) {
         button.preventDefault;
         if (button.which === 1) {
-            spawnBullet(player);
+            Bullet.spawn(player, new THREE.Vector3(0,1,0), 20);
         }
     });
 
@@ -146,35 +144,16 @@ function setupModels() {
     player = new Player();
     player.addToScene();
 
-    var backgroundTexture = new THREE.ImageUtils.loadTexture('assets/tilebackground.png');
-    backgroundTexture.wrapS = THREE.RepeatWrapping;
-    backgroundTexture.wrapT = THREE.RepeatWrapping;
-    backgroundTexture.repeat.set(100, 100);
+    background = new Background();
+    background.addToScene();
 
-    var backgroundMaterial = new THREE.MeshBasicMaterial({ map: backgroundTexture });
-    background = new THREE.Mesh(new THREE.PlaneGeometry(SCREEN_WIDTH, SCREEN_HEIGHT, 128, 128), backgroundMaterial);
-    background.position.z = -10;
-    background.texture = backgroundTexture;
-    scene.add(background);
-
-    while (clouds.length < 30) {
-        var cloud = new THREE.Mesh(cloudGeometry, cloudMaterial);
-
-        cloud.layer = Math.ceil(Math.random() * 3);
-        cloud.position.set(WIDTH_HALF / 2 - Math.round(Math.random() * WIDTH_HALF), HEIGHT_HALF / 2 - Math.round(Math.random() * HEIGHT_HALF), cloud.layer +  Math.random());
-        cloud.scale.x = cloud.layer;
-        cloud.scale.y = cloud.layer;
-
-        clouds.push(cloud);
-        scene.add(cloud);
-    }
+    Cloud.generateClouds(30);
 }
 
 function mainGameLoop() {
     requestAnimationFrame(mainGameLoop, renderer.domElement);
-    update();
     render();
-    stats.update();
+    update();
 };
 
 function render() {
@@ -197,71 +176,20 @@ function render() {
 
 function update() {
     var delta = clock.getDelta();
-
-    updateBackground(delta);
-    updateBullets(delta);
+    Cloud.updateAll(delta);
+    background.update(delta);
+    Bullet.updateAll(delta);
     player.update(delta);
     updateScore();
-}
-
-var clouds = [];
-var cloudMaterial = new THREE.MeshBasicMaterial({ map: new THREE.ImageUtils.loadTexture('assets/cloud.png'), transparent: true, opacity: 0.4});
-var cloudGeometry = new THREE.PlaneGeometry(50,50);
-function updateBackground(delta) {
-    background.texture.offset.y += delta * 5;
-
-
-    for (var i = clouds.length - 1; i >= 0; i--) {
-        var cloud = clouds[i];
-        if (cloud.position.y < -((50 * cloud.layer) + HEIGHT_HALF / 2)) {
-            cloud.layer = Math.ceil(Math.random() * 3);
-            cloud.position.set(WIDTH_HALF / 2 - Math.round(Math.random() * WIDTH_HALF), HEIGHT_HALF / 2 + (50 * cloud.layer), cloud.layer + Math.random());
-            cloud.scale.x = cloud.layer;
-            cloud.scale.y = cloud.layer;
-
-            continue;
-        }
-        cloud.translateY(-delta * 10 * cloud.layer);
-    }
-
-    
-
+    stats.update();
 }
 
 var enemies = [];
 
-function updateBullets(delta) {
-    for (var i = bullets.length - 1; i >= 0; i--) {
-        var bullet = bullets[i];
-        
-        if (false === bullet.update(delta)) {
-            bullets.splice(i, 1);
-        }
-    }
-}
+
 
 function distance(x1,y1, x2, y2) {
     return Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
-}
-
-
-function spawnBullet(creator) {
-    if (creator === undefined)
-        return;
-    
-    var bullet = new Bullet();
-    bullet.position.set(creator.position.x, creator.position.y, creator.position.z);
-
-    bullet.ray = new THREE.Ray(creator.position, new THREE.Vector3(0, 1, 0));
-
-    bullet.layer = creator.layer;
-
-    bullet.owner = creator;
-
-    bullet.addToScene();
-
-    return bullet;
-
 }
 
 function updateScore() {

@@ -4,6 +4,7 @@ function GameObject() {
     this.position = new THREE.Vector3(0, 0, 0);
     this.speed = 0;
     this.health = 0;
+    this.texture = null;
     this.material = null;
     this.mesh = null;
     this.layer = 0;
@@ -13,7 +14,6 @@ GameObject.prototype.update = function(delta) {
     this.mesh.position = this.position;
     this.mesh.scale.x = this.layer;
     this.mesh.scale.y = this.layer;
-    this.mesh.needsUpdate = true;
 }
 
 GameObject.prototype.addToScene = function () {
@@ -31,20 +31,19 @@ GameObject.prototype.getMesh = function () {
     return this.mesh;
 }
 
+var player;
 function Player() {
     GameObject.call(this);
 
     this.health = 100;
-    var planeTexture = new THREE.ImageUtils.loadTexture('assets/airplane0.png');
-    this.material = new THREE.MeshBasicMaterial({ map: planeTexture, transparent: true });
+    this.texture = new THREE.ImageUtils.loadTexture('assets/airplane0.png');
+    this.material = new THREE.MeshBasicMaterial({ map: this.texture, transparent: true });
     this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(10, 10, 10, 10), this.material);
 
     this.maxLayerChangeSpeed = 100;
     this.lastLayerChange = Date.now();
     this.layer = Layers.MIDDLE;
-    this.speed = 1000;
-
-    this.moveUp = this.moveDown = this.moveLeft = this.moveRight = false;
+    this.speed = 1000.0;
 }
 
 Player.prototype = new GameObject();
@@ -57,31 +56,24 @@ Player.prototype.update = function (delta) {
         if (Key.isDown(Key.E) && this.layer != Layers.BOTTOM) {
             this.layer--;
         }
-        
-        this.moveUp = Key.isDown(Key.W);
-        this.moveDown = Key.isDown(Key.S);
-        this.moveLeft = Key.isDown(Key.A);
-        this.moveRight = Key.isDown(Key.D);
-
         this.lastLayerChange = Date.now();
 
-        var direction = new THREE.Vector2((this.moveLeft ? 1 : 0 + this.moveRight ? -1 : 0), (this.moveUp ? 1 : 0 + this.moveDown ? -1 : 0)).normalize();
-        this.position.x -= direction.x * this.speed * delta;
-        this.position.y += direction.y * this.speed * delta;
-
+        var distance = this.speed * delta;
+        if (Key.isDown(Key.W)) this.mesh.translateY(distance);
+        if (Key.isDown(Key.S)) this.mesh.translateY(-distance);
+        if (Key.isDown(Key.A)) this.mesh.translateX(-distance);
+        if (Key.isDown(Key.D)) this.mesh.translateX(distance);
     }
 
     this.position.z = this.layer;
     GameObject.prototype.update.call(this);
 }
 
-
 var bullets = [];
 function Bullet() {
     GameObject.call(this);
-    var bulletTexture = new THREE.ImageUtils.loadTexture('assets/bullet.png');
-
-    this.material = new THREE.MeshBasicMaterial({ map: bulletTexture, transparent: true });
+    this.texture = renderer.cache.getSet('bullet',THREE.ImageUtils.loadTexture('assets/bullet.png'));
+    this.material = new THREE.MeshBasicMaterial({ map: this.texture, transparent: true });
     this.mesh = new THREE.Mesh(new THREE.SphereGeometry(2, 6, 6), this.material);
     this.speed = 100;
     bullets.push(this);
@@ -111,4 +103,94 @@ Bullet.prototype.update = function (delta) {
 
     this.position.y += this.speed * delta * this.ray.direction.y * this.layer;
     GameObject.prototype.update.call(this);
+}
+
+Bullet.updateAll = function(delta) {
+    for (var i = bullets.length - 1; i >= 0; i--) {
+        var bullet = bullets[i];
+
+        if (false === bullet.update(delta)) {
+            bullets.splice(i, 1);
+        }
+    }
+}
+
+Bullet.spawn = function (creator, direction, speed) {
+    if (creator === undefined)
+        return;
+    
+    var bullet = new Bullet();
+    bullet.speed = speed;
+    bullet.position.set(creator.position.x, creator.position.y, creator.position.z);
+
+    bullet.ray = new THREE.Ray(creator.position, direction);
+
+    bullet.layer = creator.layer;
+    bullet.owner = creator;
+
+    bullet.addToScene();
+}
+
+
+var background;
+function Background() {
+    GameObject.call(this);
+
+    this.texture = new THREE.ImageUtils.loadTexture('assets/tilebackground.png');
+    this.texture.wrapS = THREE.RepeatWrapping;
+    this.texture.wrapT = THREE.RepeatWrapping;
+    this.texture.repeat.set(100, 100);
+
+    this.material = new THREE.MeshBasicMaterial({ map: this.texture });
+    this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(SCREEN_WIDTH, SCREEN_HEIGHT, 128, 128), this.material);
+    this.mesh.position.z = -10;
+}
+
+Background.prototype = new GameObject();
+
+Background.prototype.update = function (delta) {
+    this.texture.offset.y += delta * 5;
+}
+
+
+function Cloud() {
+    GameObject.call(this);
+
+    this.texture = new THREE.ImageUtils.loadTexture('assets/cloud.png');
+    this.material = new THREE.MeshBasicMaterial({ map: this.texture, transparent: true, opacity: 0.4 });
+    this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(50, 50), this.material);
+    this.layer = Math.ceil(Math.random() * 3);
+    this.position = new THREE.Vector3(WIDTH_HALF / 2 - Math.round(Math.random() * WIDTH_HALF), HEIGHT_HALF / 2 - Math.round(Math.random() * HEIGHT_HALF), this.layer + Math.random());
+    this.mesh.scale.x = this.layer;
+    this.mesh.scale.y = this.layer;
+}
+
+Cloud.prototype = new GameObject();
+
+Cloud.prototype.update = function (delta) {
+    if (this.position.y < -((50 * this.layer) + HEIGHT_HALF / 2)) {
+        this.layer = Math.ceil(Math.random() * 3);
+        this.position.set(WIDTH_HALF / 2 - Math.round(Math.random() * WIDTH_HALF), HEIGHT_HALF / 2 + (50 * this.layer), this.layer + Math.random());
+        this.scale.x = this.layer;
+        this.scale.y = this.layer;
+        return;
+    }
+
+    this.mesh.translateY(-delta * 10 * this.layer);
+    GameObject.prototype.update.call(this);
+}
+
+var clouds = [];
+Cloud.generateClouds = function(numberToCreate) {
+    while (clouds.length < numberToCreate) {
+        var cloud = new Cloud();
+        clouds.push(cloud);
+        cloud.addToScene();
+    }
+}
+
+Cloud.updateAll = function (delta) {
+    for (var i = clouds.length - 1; i >= 0; i--) {
+            clouds[i].update(delta)
+        }
 }
