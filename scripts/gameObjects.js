@@ -298,6 +298,7 @@ Enemy.spawn = function (position, direction) {
 function GlobalState() {
     this.paused = false;
     this.muted = localStorage.getItem('muted') || false;
+    createjs.Sound.setMute(this.muted);
     this.muting = false;
     this.pausing = false;
 }
@@ -312,13 +313,15 @@ GlobalState.prototype.update = function () {
         this.muting = true;
     }
     
-    this.pausing = !Key.isDown(Key.P);
-    this.muting = !Key.isDown(Key.M);
+    if (!Key.isDown(Key.P)) this.pausing = false;
+    if (!Key.isDown(Key.M)) this.muting = false;
+    
     
 }
 
 GlobalState.prototype.toggleMute = function () {
-    this.muted = !this.muted;
+    this.muted = !this.muted
+    createjs.Sound.setMute(this.muted);
     localStorage.setItem('muted', this.muted);
     bgMusic.setMute(this.muted);
 }
