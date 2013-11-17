@@ -36,7 +36,6 @@ function setup() {
     init();
     
     window.addEventListener('resize', onWindowResize, false);
-    document.addEventListener('mousemove', handleMouseMove, false);
 
     if (!createjs.Sound.initializeDefaultPlugins()) {
        alert("Sound is unavailable.");
@@ -103,7 +102,6 @@ function init() {
     setupModels();
 
     clock = new THREE.Clock();
-
 
     material_depth = new THREE.MeshDepthMaterial();
 
@@ -200,19 +198,11 @@ function update() {
         
         if (!globalState.paused) {
             // Change this for increased difficulty.
-            var enemySpawnChance = 0.01
+        if (Math.random() <  0.01) {
             if (Math.random() < enemySpawnChance) {
                 var maxX = WIDTH_HALF / 2 - 20;
                 var randX = maxX - 2 * maxX * Math.random();
-                var randLayer = Math.random();
-                var layer;
-                if (randLayer < .33) {
-                    layer = Layers.BOTTOM;
-                } else if (randLayer < .66) {
-                    layer = Layers.MIDDLE;
-                } else {
-                    layer = Layers.TOP;
-                }
+            var layer = Math.round(Math.random() * 3);            
                 Enemy.spawn(new THREE.Vector3(randX, HEIGHT_HALF / 1.5, layer), new THREE.Vector3(0, -10, 0));
             }
 
@@ -235,19 +225,6 @@ function distance(x1,y1, x2, y2) {
 
 function updateScore() {
     $("#score").text(score);
-}
-
-function handleMouseMove(event) {
-    //$("#clientx").text(event.clientX);
-    //$("#clienty").text(event.clientY);
-
-    //var vector = new THREE.Vector3( (event.clientX / SCREEN_WIDTH) * 2 - 1,
-    //                                -(event.clientY / SCREEN_HEIGHT) * 2 + 1,
-    //                                0.5);
-
-    //player.position.x = vector.x * WIDTH_HALF/2;
-    //player.position.y = vector.y * HEIGHT_HALF/2;
-
 }
 
 function onWindowResize(event) {

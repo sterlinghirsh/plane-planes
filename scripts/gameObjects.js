@@ -49,13 +49,6 @@ function Player() {
 
     this.weaponCooldown = 200;
     this.lastShotTime = 0;
-
-    this.up = false;
-    this.down = false;
-    this.left = false;
-    this.right = false;
-    this.firing = false;
-
     this.spread = 0.1;
 
     this.changingLayers = false;
