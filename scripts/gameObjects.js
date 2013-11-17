@@ -88,18 +88,18 @@ Bullet.prototype.update = function (delta) {
         return false;
     }
 
-    //// collide with enemies
-    //for (var j = enemies.length - 1; j >= 0; j--) {
-    //    var enemy = enemies[i];
-    //    if (enemy.layer == bullet.layer && distance(enemy.position.x, enemy.position.y, bullet.position.x, bullet.position.y) < 10) {
-    //        enemy.health -= 1;
-    //    }
-    //}
+    // collide with enemies
+    for (var j = enemies.length - 1; j >= 0; j--) {
+        var enemy = enemies[i];
+        if (enemy.layer == bullet.layer && distance(enemy.position.x, enemy.position.y, bullet.position.x, bullet.position.y) < 10) {
+            enemy.health -= 1;
+        }
+    }
 
-    //// collide with player
-    //if (player.layer == bullet.layer && bullet.owner != player && distance(player.position.x, player.position.y, bullet.position.x, bullet.position.y) < 10) {
-    //    player.health -= 1;
-    //}
+    // collide with player
+    if (player.layer == bullet.layer && bullet.owner != player && distance(player.position.x, player.position.y, bullet.position.x, bullet.position.y) < 10) {
+        player.health -= 1;
+    }
 
     this.position.y += this.speed * delta * this.ray.direction.y * this.layer;
     GameObject.prototype.update.call(this);
@@ -120,7 +120,10 @@ Bullet.spawn = function (creator, direction, speed) {
         return;
     
     var bullet = new Bullet();
-    bullet.speed = speed;
+
+    if (speed % 1 === speed) {
+        bullet.speed = speed;
+    }
     bullet.position.set(creator.position.x, creator.position.y, creator.position.z);
 
     bullet.ray = new THREE.Ray(creator.position, direction);
@@ -143,13 +146,15 @@ function Background() {
 
     this.material = new THREE.MeshBasicMaterial({ map: this.texture });
     this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(SCREEN_WIDTH, SCREEN_HEIGHT, 128, 128), this.material);
-    this.mesh.position.z = -10;
+    this.layer = -10;
+    
+    this.speed = 2.0;
 }
 
 Background.prototype = new GameObject();
 
 Background.prototype.update = function (delta) {
-    this.texture.offset.y += delta * 5;
+    this.texture.offset.y += delta * this.speed;
 }
 
 
@@ -161,8 +166,7 @@ function Cloud() {
     this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(50, 50), this.material);
     this.layer = Math.ceil(Math.random() * 3);
     this.position = new THREE.Vector3(WIDTH_HALF / 2 - Math.round(Math.random() * WIDTH_HALF), HEIGHT_HALF / 2 - Math.round(Math.random() * HEIGHT_HALF), this.layer + Math.random());
-    this.mesh.scale.x = this.layer;
-    this.mesh.scale.y = this.layer;
+    this.speed = 10;
 }
 
 Cloud.prototype = new GameObject();
@@ -171,12 +175,10 @@ Cloud.prototype.update = function (delta) {
     if (this.position.y < -((50 * this.layer) + HEIGHT_HALF / 2)) {
         this.layer = Math.ceil(Math.random() * 3);
         this.position.set(WIDTH_HALF / 2 - Math.round(Math.random() * WIDTH_HALF), HEIGHT_HALF / 2 + (50 * this.layer), this.layer + Math.random());
-        this.scale.x = this.layer;
-        this.scale.y = this.layer;
         return;
     }
 
-    this.mesh.translateY(-delta * 10 * this.layer);
+    this.mesh.translateY(-delta * this.speed * this.layer);
     GameObject.prototype.update.call(this);
 }
 
@@ -193,4 +195,35 @@ Cloud.updateAll = function (delta) {
     for (var i = clouds.length - 1; i >= 0; i--) {
             clouds[i].update(delta)
         }
+}
+
+var enemies = [];
+function Enemy() {
+    GameObject.call(this);
+    
+    this.texture = new THREE.ImageUtils.loadTexture('');
+    this.material = new THREE.MeshBasicMaterial({ map: this.texture, transparent: true });
+    this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), this.material);
+    this.layer = Layers.MIDDLE;
+    this.position = new THREE.Vector3(0, 0, 0);
+    this.speed = 100.0;
+    this.health = 10;
+}
+
+Enemy.prototype = new GameObject();
+
+Enemy.prototype.update = function (delta) {
+    // should probably have different patterns of enemy behavior here
+}
+
+Enemy.updateAll = function(delta) {
+    for (var i = enemies.length - 1; i >= 0; i--) {
+        var enemy = enemies[i];
+        if (enemy.health <= 0) {
+            enemy.destroy();
+            score += 10;
+        }
+
+        enemy.update(delta);
+    }
 }

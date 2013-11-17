@@ -103,7 +103,7 @@ function init() {
     $(document).click(function (button) {
         button.preventDefault;
         if (button.which === 1) {
-            Bullet.spawn(player, new THREE.Vector3(0,1,0), 20);
+            Bullet.spawn(player, new THREE.Vector3(0,1,0));
         }
     });
 
