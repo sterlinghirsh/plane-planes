@@ -11,8 +11,8 @@ function GameObject() {
 
 GameObject.prototype.update = function(delta) {
     this.mesh.position = this.position;
-    this.mesh.scale.x = this.layer * 2;
-    this.mesh.scale.y = this.layer * 2;
+    this.mesh.scale.x = this.layer;
+    this.mesh.scale.y = this.layer;
     this.mesh.needsUpdate = true;
 }
 
@@ -61,16 +61,38 @@ Player.prototype.update = function (delta) {
     GameObject.prototype.update.call(this);
 }
 
+
+var bullets = [];
 function Bullet() {
     GameObject.call(this);
     this.material = new THREE.MeshBasicMaterial({ color: 0x444444 });
     this.mesh = new THREE.Mesh(new THREE.SphereGeometry(2, 6, 6), this.material);
-    this.speed = 10;
+    this.speed = 100;
+    bullets.push(this);
 }
 
 Bullet.prototype = new GameObject();
 
 Bullet.prototype.update = function (delta) {
+    if (this.position.y < -HEIGHT_HALF/2 || this.position.y > HEIGHT_HALF/2) {
+        
+        this.destroy();
+        return false;
+    }
+
+    //// collide with enemies
+    //for (var j = enemies.length - 1; j >= 0; j--) {
+    //    var enemy = enemies[i];
+    //    if (enemy.layer == bullet.layer && distance(enemy.position.x, enemy.position.y, bullet.position.x, bullet.position.y) < 10) {
+    //        enemy.health -= 1;
+    //    }
+    //}
+
+    //// collide with player
+    //if (player.layer == bullet.layer && bullet.owner != player && distance(player.position.x, player.position.y, bullet.position.x, bullet.position.y) < 10) {
+    //    player.health -= 1;
+    //}
+
     this.position.y += this.speed * delta * this.ray.direction.y * this.layer;
     GameObject.prototype.update.call(this);
 }

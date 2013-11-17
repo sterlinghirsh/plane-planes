@@ -48,10 +48,10 @@ function setup() {
 
     mainGameLoop();
 }
-
+var stats;
 function init() {
-    var stats = new Stats();
-    stats.setMode(1); // 0: fps, 1: ms
+    stats = new Stats();
+    stats.setMode(0); // 0: fps, 1: ms
 
     // Align top-left
     stats.domElement.style.position = 'absolute';
@@ -60,16 +60,6 @@ function init() {
 
     document.body.appendChild(stats.domElement);
 
-    setInterval(function () {
-
-        stats.begin();
-
-        // your code goes here
-
-        stats.end();
-
-    }, 1000 / 60);
-
     setWindowSize();
 
     scene = new THREE.Scene();
@@ -77,9 +67,9 @@ function init() {
     renderer = new THREE.WebGLRenderer();
     renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    camera = new THREE.OrthographicCamera(WIDTH_HALF / -2, WIDTH_HALF / 2, HEIGHT_HALF / 2, HEIGHT_HALF / -2, 1, 200);
+    camera = new THREE.OrthographicCamera(WIDTH_HALF / -2, WIDTH_HALF / 2, HEIGHT_HALF / 2, HEIGHT_HALF / -2, -500, 2000);
     camera.position.z = 150;
-    camera.position.y = -10;
+    scene.add(camera);
 
     container = document.getElementById("canvas");
     container.appendChild(renderer.domElement);
@@ -152,7 +142,7 @@ function setupModels() {
     scene.add(pointLight);
 
     player = new Player();
-    scene.add(player.getMesh());
+    player.addToScene();
 
     var backgroundTexture = new THREE.ImageUtils.loadTexture('assets/tilebackground.png');
     backgroundTexture.wrapS = THREE.RepeatWrapping;
@@ -164,12 +154,25 @@ function setupModels() {
     background.position.z = -10;
     background.texture = backgroundTexture;
     scene.add(background);
+
+    while (clouds.length < 30) {
+        var cloud = new THREE.Mesh(cloudGeometry, cloudMaterial);
+
+        cloud.layer = Math.ceil(Math.random() * 3);
+        cloud.position.set(WIDTH_HALF / 2 - Math.round(Math.random() * WIDTH_HALF), HEIGHT_HALF / 2 - Math.round(Math.random() * HEIGHT_HALF), cloud.layer + 0.5);
+        cloud.scale.x = cloud.layer;
+        cloud.scale.y = cloud.layer;
+
+        clouds.push(cloud);
+        scene.add(cloud);
+    }
 }
 
 function mainGameLoop() {
     requestAnimationFrame(mainGameLoop, renderer.domElement);
     render();
     update();
+    stats.update();
 };
 
 function render() {
@@ -201,61 +204,37 @@ function update() {
 
 var clouds = [];
 var cloudMaterial = new THREE.MeshBasicMaterial({ map: new THREE.ImageUtils.loadTexture('assets/cloud.png'), transparent: true, opacity: 0.4 });
-var cloudGeometry = new THREE.PlaneGeometry(10,10);
+var cloudGeometry = new THREE.PlaneGeometry(50,50);
 function updateBackground(delta) {
     background.texture.offset.y += delta * 5;
 
 
     for (var i = clouds.length - 1; i >= 0; i--) {
         var cloud = clouds[i];
-        if (cloud.position.y < -HEIGHT_HALF ||  cloud.position.y > HEIGHT_HALF) {
-            clouds.splice(i, 1);
-            scene.remove(cloud);
+        if (cloud.position.y < -((50 * cloud.layer) + HEIGHT_HALF / 2)) {
+            cloud.layer = Math.ceil(Math.random() * 3);
+            cloud.position.set(WIDTH_HALF / 2 - Math.round(Math.random() * WIDTH_HALF), HEIGHT_HALF / 2 + (50 * cloud.layer), cloud.layer + 0.5);
+            cloud.scale.x = cloud.layer;
+            cloud.scale.y = cloud.layer;
+
             continue;
         }
-        cloud.translateY(-delta * 10);
+        cloud.translateY(-delta * 10 * cloud.layer);
     }
 
-    while (clouds.length < 30) {
-        var cloud = new THREE.Mesh(cloudGeometry, cloudMaterial);
-        
-        cloud.layer = Math.round(Math.random() * 3);
-        cloud.position.set(Math.round(Math.random() * SCREEN_WIDTH) - WIDTH_HALF, Math.round(Math.random() * SCREEN_HEIGHT) - HEIGHT_HALF, cloud.layer);
-        cloud.scale.x = 5* cloud.layer;
-        cloud.scale.y = 5* cloud.layer;
-
-        clouds.push(cloud);
-        scene.add(cloud);
-    }
+    
 
 }
 
 var enemies = [];
-var bullets = [];
 
 function updateBullets(delta) {
     for (var i = bullets.length - 1; i >= 0; i--) {
         var bullet = bullets[i];
-        if (bullet.position.y < -HEIGHT_HALF || bullet.position.y > HEIGHT_HALF) {
+        
+        if (false === bullet.update(delta)) {
             bullets.splice(i, 1);
-            bullet.destroy();
-            continue;
         }
-
-        //// collide with enemies
-        //for (var j = enemies.length - 1; j >= 0; j--) {
-        //    var enemy = enemies[i];
-        //    if (enemy.layer == bullet.layer && distance(enemy.position.x, enemy.position.y, bullet.position.x, bullet.position.y) < 10) {
-        //        enemy.health -= 1;
-        //    }
-        //}
-
-        //// collide with player
-        //if (player.layer == bullet.layer && bullet.owner != player && distance(player.position.x, player.position.y, bullet.position.x, bullet.position.y) < 10) {
-        //    player.health -= 1;
-        //}
-
-        bullet.update(delta);
     }
 }
 
@@ -274,11 +253,8 @@ function spawnBullet(creator) {
     bullet.ray = new THREE.Ray(creator.position, new THREE.Vector3(0, 1, 0));
 
     bullet.layer = creator.layer;
-    bullet.mesh.scale.x = creator.layer;
-    bullet.mesh.scale.y = creator.layer;
 
     bullet.owner = creator;
-    bullets.push(bullet);
 
     bullet.addToScene();
 
@@ -294,34 +270,26 @@ function handleMouseMove(event) {
     $("#clientx").text(event.clientX);
     $("#clienty").text(event.clientY);
 
-    var vector = new THREE.Vector3(
-    (event.clientX / SCREEN_WIDTH) * 2 - 1,
-    -(event.clientY / SCREEN_HEIGHT) * 2 + 1,
-    0.5);
+    var vector = new THREE.Vector3( (event.clientX / SCREEN_WIDTH) * 2 - 1,
+                                    -(event.clientY / SCREEN_HEIGHT) * 2 + 1,
+                                    0.5);
 
-    projector.unprojectVector(vector, camera);
-
-    var dir = vector.sub(camera.position).normalize();
-
-    var distance = -camera.position.z / dir.z;
-
-    var pos = camera.position.clone().add(dir.multiplyScalar(distance));
-    player.position.x = pos.x;
-    player.position.y = pos.y;
+    player.position.x = vector.x * WIDTH_HALF/2;
+    player.position.y = vector.y * HEIGHT_HALF/2;
 
 }
 
 function onWindowResize(event) {
     setWindowSize();
     
-    renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-
     camera.left = WIDTH_HALF / -2;
     camera.right = WIDTH_HALF / 2;
     camera.top = HEIGHT_HALF / 2;
     camera.bottom = HEIGHT_HALF / -2;
 
     camera.updateProjectionMatrix();
+    renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+
 }
 
 function setWindowSize() {
