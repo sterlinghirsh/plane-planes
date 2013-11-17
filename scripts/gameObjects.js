@@ -305,12 +305,10 @@ function GlobalState() {
 
 GlobalState.prototype.update = function () {
     if (!this.pausing && Key.isDown(Key.P)) {
-        this.paused = !this.paused;
-        this.pausing = true;
+        this.togglePause();
     }
     if (!this.muting && Key.isDown(Key.M)) {
         this.toggleMute();
-        this.muting = true;
     }
     
     if (!Key.isDown(Key.P)) this.pausing = false;
@@ -319,9 +317,16 @@ GlobalState.prototype.update = function () {
     
 }
 
+GlobalState.prototype.togglePause = function () {
+    this.paused = !this.paused;
+    createjs.Sound.setMute(this.muted || this.paused);
+    this.pausing = true;
+}
+
 GlobalState.prototype.toggleMute = function () {
     this.muted = !this.muted
     createjs.Sound.setMute(this.muted);
     localStorage.setItem('muted', this.muted);
     bgMusic.setMute(this.muted);
+    this.muting = true;
 }
