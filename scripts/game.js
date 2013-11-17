@@ -68,7 +68,9 @@ function init() {
     renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 
     camera = new THREE.OrthographicCamera(WIDTH_HALF / -2, WIDTH_HALF / 2, HEIGHT_HALF / 2, HEIGHT_HALF / -2, -500, 2000);
-    camera.position.z = 150;
+    camera.position.z = 10;
+    camera.position.y = 0;
+    camera.lookAt(new THREE.Vector3(0, 0, 0));
     scene.add(camera);
 
     container = document.getElementById("canvas");
@@ -159,7 +161,7 @@ function setupModels() {
         var cloud = new THREE.Mesh(cloudGeometry, cloudMaterial);
 
         cloud.layer = Math.ceil(Math.random() * 3);
-        cloud.position.set(WIDTH_HALF / 2 - Math.round(Math.random() * WIDTH_HALF), HEIGHT_HALF / 2 - Math.round(Math.random() * HEIGHT_HALF), cloud.layer + 0.5);
+        cloud.position.set(WIDTH_HALF / 2 - Math.round(Math.random() * WIDTH_HALF), HEIGHT_HALF / 2 - Math.round(Math.random() * HEIGHT_HALF), cloud.layer +  Math.random());
         cloud.scale.x = cloud.layer;
         cloud.scale.y = cloud.layer;
 
@@ -170,8 +172,8 @@ function setupModels() {
 
 function mainGameLoop() {
     requestAnimationFrame(mainGameLoop, renderer.domElement);
-    render();
     update();
+    render();
     stats.update();
 };
 
@@ -203,7 +205,7 @@ function update() {
 }
 
 var clouds = [];
-var cloudMaterial = new THREE.MeshBasicMaterial({ map: new THREE.ImageUtils.loadTexture('assets/cloud.png'), transparent: true, opacity: 0.4 });
+var cloudMaterial = new THREE.MeshBasicMaterial({ map: new THREE.ImageUtils.loadTexture('assets/cloud.png'), transparent: true, opacity: 0.4});
 var cloudGeometry = new THREE.PlaneGeometry(50,50);
 function updateBackground(delta) {
     background.texture.offset.y += delta * 5;
@@ -213,7 +215,7 @@ function updateBackground(delta) {
         var cloud = clouds[i];
         if (cloud.position.y < -((50 * cloud.layer) + HEIGHT_HALF / 2)) {
             cloud.layer = Math.ceil(Math.random() * 3);
-            cloud.position.set(WIDTH_HALF / 2 - Math.round(Math.random() * WIDTH_HALF), HEIGHT_HALF / 2 + (50 * cloud.layer), cloud.layer + 0.5);
+            cloud.position.set(WIDTH_HALF / 2 - Math.round(Math.random() * WIDTH_HALF), HEIGHT_HALF / 2 + (50 * cloud.layer), cloud.layer + Math.random());
             cloud.scale.x = cloud.layer;
             cloud.scale.y = cloud.layer;
 
@@ -267,15 +269,15 @@ function updateScore() {
 }
 
 function handleMouseMove(event) {
-    $("#clientx").text(event.clientX);
-    $("#clienty").text(event.clientY);
+    //$("#clientx").text(event.clientX);
+    //$("#clienty").text(event.clientY);
 
-    var vector = new THREE.Vector3( (event.clientX / SCREEN_WIDTH) * 2 - 1,
-                                    -(event.clientY / SCREEN_HEIGHT) * 2 + 1,
-                                    0.5);
+    //var vector = new THREE.Vector3( (event.clientX / SCREEN_WIDTH) * 2 - 1,
+    //                                -(event.clientY / SCREEN_HEIGHT) * 2 + 1,
+    //                                0.5);
 
-    player.position.x = vector.x * WIDTH_HALF/2;
-    player.position.y = vector.y * HEIGHT_HALF/2;
+    //player.position.x = vector.x * WIDTH_HALF/2;
+    //player.position.y = vector.y * HEIGHT_HALF/2;
 
 }
 

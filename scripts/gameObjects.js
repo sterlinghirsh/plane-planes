@@ -42,6 +42,9 @@ function Player() {
     this.maxLayerChangeSpeed = 100;
     this.lastLayerChange = Date.now();
     this.layer = Layers.MIDDLE;
+    this.speed = 1000;
+
+    this.moveUp = this.moveDown = this.moveLeft = this.moveRight = false;
 }
 
 Player.prototype = new GameObject();
@@ -54,7 +57,18 @@ Player.prototype.update = function (delta) {
         if (Key.isDown(Key.E) && this.layer != Layers.BOTTOM) {
             this.layer--;
         }
+        
+        this.moveUp = Key.isDown(Key.W);
+        this.moveDown = Key.isDown(Key.S);
+        this.moveLeft = Key.isDown(Key.A);
+        this.moveRight = Key.isDown(Key.D);
+
         this.lastLayerChange = Date.now();
+
+        var direction = new THREE.Vector2((this.moveLeft ? 1 : 0 + this.moveRight ? -1 : 0), (this.moveUp ? 1 : 0 + this.moveDown ? -1 : 0)).normalize();
+        this.position.x -= direction.x * this.speed * delta;
+        this.position.y += direction.y * this.speed * delta;
+
     }
 
     this.position.z = this.layer;
@@ -65,7 +79,9 @@ Player.prototype.update = function (delta) {
 var bullets = [];
 function Bullet() {
     GameObject.call(this);
-    this.material = new THREE.MeshBasicMaterial({ color: 0x444444 });
+    var bulletTexture = new THREE.ImageUtils.loadTexture('assets/bullet.png');
+
+    this.material = new THREE.MeshBasicMaterial({ map: bulletTexture, transparent: true });
     this.mesh = new THREE.Mesh(new THREE.SphereGeometry(2, 6, 6), this.material);
     this.speed = 100;
     bullets.push(this);

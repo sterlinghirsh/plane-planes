@@ -33,7 +33,7 @@ var Key = {
     SPACE: 32,
 
     isDown: function (keyCode) {
-        return this._pressed[keyCode];
+        return !!this._pressed[keyCode];
     },
 
     onKeydown: function (event) {
