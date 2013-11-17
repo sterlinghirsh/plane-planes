@@ -340,6 +340,8 @@ GlobalState.prototype.toggleMute = function () {
     this.muted = !this.muted
     createjs.Sound.setMute(this.muted);
     localStorage.setItem('muted', this.muted);
-    bgMusic.setMute(this.muted);
-    this.muting = true;
+    if (bgMusic) {
+        bgMusic.setMute(this.muted);
+        this.muting = true;
+    }
 }
