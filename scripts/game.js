@@ -28,12 +28,36 @@ var Layers = function () {
     }
 }();
 
+var bgMusic;
+
 function setup() {
 
     init();
     
     window.addEventListener('resize', onWindowResize, false);
     document.addEventListener('mousemove', handleMouseMove, false);
+
+    if (!createjs.Sound.initializeDefaultPlugins()) {
+       alert("Sound is unavailable.");
+    } else {
+        var manifest = [
+            {id: "Music1", src: "music/plane-planes1.mp3|music/plane-planes1.ogg"}, 
+            {id: "Music2", src: "music/plane-planes2.mp3|music/plane-planes2.ogg"}, 
+            {id: "Music3", src: "music/plane-planes3.mp3|music/plane-planes3.ogg"}
+        ];
+
+        createjs.Sound.addEventListener("fileload", function(ev) {
+            // Initialize Music
+            if (ev.id == 'Music2')
+                bgMusic = createjs.Sound.play(ev.src, {
+                    interrupt: createjs.Sound.INTERRUPT_ANY,
+                    loop: -1,
+                    volume: 0.2
+                });
+        });
+
+        createjs.Sound.registerManifest(manifest);
+    }
 
     // disable accidental right clicks triggering the context menu
     $(document).ready(function () {
