@@ -5,15 +5,16 @@ const windowMargin = 10;
 
 var score = 0;
 
-var scene, renderer, container, cube, camera, plane, projector, clock, material_depth;
+var scene, renderer, container, cube, camera, projector, clock, material_depth;
+
+var player;
 
 var background;
 
-var SCREEN_WIDTH = $(window).innerWidth() - windowMargin,
-    SCREEN_HEIGHT = $(window).innerHeight() - windowMargin;
-
-var WIDTH_HALF = SCREEN_WIDTH / 2,
-    HEIGHT_HALF = SCREEN_HEIGHT / 2;
+var SCREEN_WIDTH,
+    SCREEN_HEIGHT,
+    WIDTH_HALF,
+    HEIGHT_HALF;
 
 const bulletSpeed = 100;
 
@@ -30,8 +31,6 @@ var Layers = function () {
         'TOP': 3
     }
 }();
-
-var currentLayer = Layers.MIDDLE;
 
 function setup() {
 
@@ -51,6 +50,8 @@ function setup() {
 }
 
 function init() {
+    setWindowSize();
+
     scene = new THREE.Scene();
     projector = new THREE.Projector();
     renderer = new THREE.WebGLRenderer();
@@ -68,7 +69,7 @@ function init() {
     $(document).click(function (button) {
         button.preventDefault;
         if (button.which === 1) {
-            spawnBullet(plane);
+            spawnBullet(player);
         }
     });
 
@@ -129,13 +130,9 @@ function setupModels() {
     pointLight.position.y = 50;
     pointLight.position.z = 130;
     scene.add(pointLight);
-    
-    // create background
-    var planeTexture = new THREE.ImageUtils.loadTexture('assets/airplane0.png');
-    var planeMaterial = new THREE.MeshBasicMaterial({ map: planeTexture, transparent:true  });
-    planeTexture.needsUpdate = true;
-    plane = new THREE.Mesh(new THREE.PlaneGeometry(10, 10, 10, 10), planeMaterial);
-    scene.add(plane);
+
+    player = new Player();
+    scene.add(player.getMesh());
 
     var backgroundTexture = new THREE.ImageUtils.loadTexture('assets/tilebackground.png');
     backgroundTexture.wrapS = THREE.RepeatWrapping;
@@ -178,7 +175,7 @@ function update() {
 
     updateBackground(delta);
     updateBullets(delta);
-    updatePlayerShip(delta);
+    player.update(delta);
     updateScore();
 }
 
@@ -213,25 +210,32 @@ function updateBackground(delta) {
 
 }
 
+var enemies = [];
+var bullets = [];
+
 function updateBullets(delta) {
     for (var i = bullets.length - 1; i >= 0; i--) {
         var bullet = bullets[i];
         if (bullet.position.y < -HEIGHT_HALF || bullet.position.y > HEIGHT_HALF) {
             bullets.splice(i, 1);
-            scene.remove(bullet);
+            bullet.destroy();
             continue;
         }
 
-        // collide with enemies
+        //// collide with enemies
+        //for (var j = enemies.length - 1; j >= 0; j--) {
+        //    var enemy = enemies[i];
+        //    if (enemy.layer == bullet.layer && distance(enemy.position.x, enemy.position.y, bullet.position.x, bullet.position.y) < 10) {
+        //        enemy.health -= 1;
+        //    }
+        //}
 
-        // collide with player
-        if (plane.layer == bullet.layer && distance(plane.position.x, plane.position.y, bullet.position.x, bullet.position.y) < 10  && bullet.owner != plane)
-        {
-            score -= 10;
-        }
-        bullet.ray.direction.y
+        //// collide with player
+        //if (player.layer == bullet.layer && bullet.owner != player && distance(player.position.x, player.position.y, bullet.position.x, bullet.position.y) < 10) {
+        //    player.health -= 1;
+        //}
 
-        bullet.translateY(bulletSpeed * delta * bullet.ray.direction.y * bullet.layer);
+        bullet.update(delta);
     }
 }
 
@@ -239,59 +243,26 @@ function distance(x1,y1, x2, y2) {
     return Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
 }
 
-var bullets = [];
 
-var bulletMaterial = new THREE.MeshBasicMaterial({ color: 0x444444 });
-var bulletGeometry = new THREE.SphereGeometry(2, 6, 6);
-
-function spawnBullet(creator, layer) {
+function spawnBullet(creator) {
     if (creator === undefined)
         return;
     
-    var bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
+    var bullet = new Bullet();
     bullet.position.set(creator.position.x, creator.position.y, creator.position.z);
-   
 
-    var bulletDirection;
-    
     bullet.ray = new THREE.Ray(creator.position, new THREE.Vector3(0, 1, 0));
 
-    bullet.layer = currentLayer;
-    bullet.scale.x = currentLayer;
-    bullet.scale.y = currentLayer;
+    bullet.layer = creator.layer;
+    bullet.mesh.scale.x = creator.layer;
+    bullet.mesh.scale.y = creator.layer;
 
     bullet.owner = creator;
     bullets.push(bullet);
-    scene.add(bullet);
+
+    bullet.addToScene();
 
     return bullet;
-
-}
-
-function updatePlayerShip(delta) {
-    if (Date.now() > lastLayerChange + maxLayerChangeSpeed) {
-        if (Key.isDown(Key.Q) && currentLayer != Layers.TOP) {
-            currentLayer++;
-        }
-        if (Key.isDown(Key.E) && currentLayer != Layers.BOTTOM) {
-            currentLayer--;
-        }
-        lastLayerChange = Date.now();
-    }
-
-    if (Key.isDown(Key.A)) {
-        cube.rotation.x += 0.1;
-    }
-
-    if (Key.isDown(Key.D)) {
-        cube.rotation.y += 0.1;
-    }
-
-
-
-    plane.position.z = currentLayer;
-    plane.scale.x = currentLayer * 2;
-    plane.scale.y = currentLayer * 2;
 
 }
 
@@ -303,8 +274,6 @@ function handleMouseMove(event) {
     $("#clientx").text(event.clientX);
     $("#clienty").text(event.clientY);
 
-    //plane.position.x = event.clientX - WIDTH_HALF;
-    //plane.position.y = -event.clientY + HEIGHT_HALF;
     var vector = new THREE.Vector3(
     (event.clientX / SCREEN_WIDTH) * 2 - 1,
     -(event.clientY / SCREEN_HEIGHT) * 2 + 1,
@@ -317,18 +286,13 @@ function handleMouseMove(event) {
     var distance = -camera.position.z / dir.z;
 
     var pos = camera.position.clone().add(dir.multiplyScalar(distance));
-    plane.position.x = pos.x;
-    plane.position.y = pos.y;
+    player.position.x = pos.x;
+    player.position.y = pos.y;
 
 }
 
 function onWindowResize(event) {
-
-    SCREEN_WIDTH = $(window).width() - windowMargin;
-    SCREEN_HEIGHT = $(window).height() - windowMargin;
-
-    WIDTH_HALF = SCREEN_WIDTH / 2;
-    HEIGHT_HALF = SCREEN_HEIGHT / 2;
+    setWindowSize();
     
     renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 
@@ -338,4 +302,12 @@ function onWindowResize(event) {
     camera.bottom = HEIGHT_HALF / -2;
 
     camera.updateProjectionMatrix();
+}
+
+function setWindowSize() {
+    SCREEN_WIDTH = $(window).width() - windowMargin;
+    SCREEN_HEIGHT = $(window).height() - windowMargin;
+
+    WIDTH_HALF = SCREEN_WIDTH / 2;
+    HEIGHT_HALF = SCREEN_HEIGHT / 2;
 }
