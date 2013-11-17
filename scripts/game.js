@@ -26,10 +26,12 @@ var Layers = function () {
 }();
 
 var bgMusic;
+var globalState;
 
 
 function setup() {
 
+    globalState = new GlobalState();
     init();
     
     window.addEventListener('resize', onWindowResize, false);
@@ -69,6 +71,7 @@ function setup() {
 
 var stats;
 function init() {
+
     stats = new Stats();
     stats.setMode(0); // 0: fps, 1: ms
 
@@ -189,6 +192,10 @@ function render() {
 
 function update() {
     var delta = clock.getDelta();
+
+    globalState.update();
+
+    if (!globalState.paused) {
     
     if (Math.random() <  0.01) {
         var maxX = WIDTH_HALF / 2 - 20;
@@ -205,12 +212,13 @@ function update() {
         Enemy.spawn(new THREE.Vector3(randX, HEIGHT_HALF / 1.5, layer), new THREE.Vector3(0, -10, 0));
     }
 
-    Cloud.updateAll(delta);
-    background.update(delta);
-    Bullet.updateAll(delta);
+        Cloud.updateAll(delta);
+        background.update(delta);
+        Bullet.updateAll(delta);
     Enemy.updateAll(delta);
-    player.update(delta);
-    updateScore();
+        player.update(delta);
+        updateScore();
+    }
     stats.update();
 }
 

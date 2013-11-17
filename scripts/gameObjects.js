@@ -59,82 +59,33 @@ function Player() {
     this.spread = 0.1;
 
     this.changingLayers = false;
-    this.layerChangeDirection = 0;
-
-
-    var that = this;
-
-    // Keycodes
-    var w = 87;
-    var a = 65;
-    var s = 83;
-    var d = 68;
-    var q = 81;
-    var e = 69;
-    var space = 32;
-
-    window.addEventListener('keydown', function(ev) {
-        switch(ev.keyCode) {
-            case w: that.up = true; break;
-            case s: that.down = true; break;
-            case a: that.left = true; break;
-            case d: that.right = true; break;
-            case space: that.firing = true; break;
-            case e: if (!that.changingLayers) {
-                        that.changingLayers = true;
-                        that.layerChangeDirection = -1;
-                    }
-                    break;
-            case q: if (!that.changingLayers) {
-                        that.changingLayers = true;
-                        that.layerChangeDirection = 1;
-                    }
-                    break;
-        }
-    });
-    
-    window.addEventListener('keyup', function(ev) {
-        switch(ev.keyCode) {
-            case w: that.up = false; break;
-            case s: that.down = false; break;
-            case a: that.left = false; break;
-            case d: that.right = false; break;
-            case space: that.firing = false; break;
-            case e: that.changingLayers = false; that.layerChangeDirection = 0; break;
-            case q: that.changingLayers = false; that.layerChangeDirection = 0; break;
-        }
-    });
 }
 
 Player.prototype = new GameObject();
 
 Player.prototype.update = function (delta) {
-    if (this.layerChangeDirection > 0 && this.layer != Layers.TOP) {
+    
+    if (!this.changingLayers && Key.isDown(Key.Q) && this.layer != Layers.TOP) {
         this.layer++;
-        this.layerChangeDirection = 0;
+        this.changingLayers = true;
     }
-    if (this.layerChangeDirection < 0 && this.layer != Layers.BOTTOM) {
+    if (!this.changingLayers && Key.isDown(Key.E) && this.layer != Layers.BOTTOM) {
         this.layer--;
-        this.layerChangeDirection = 0;
+        this.changingLayers = true;
     }
+
+    if (!Key.isDown(Key.Q) && !Key.isDown(Key.E)) this.changingLayers = false;
 
     var distance = this.speed * delta;
 
-    if (this.up && !this.down) {
-        this.mesh.translateY(distance);
-    } else if (this.down && !this.up) {
-        this.mesh.translateY(-distance);
-    }
-    
-    if (this.left && !this.right) {
-        this.mesh.translateX(-distance);
-    } else if (this.right && !this.left) {
-        this.mesh.translateX(distance);
-    }
+    if (Key.isDown(Key.W)) this.mesh.translateY(distance);
+    if (Key.isDown(Key.S)) this.mesh.translateY(-distance);
+    if (Key.isDown(Key.A)) this.mesh.translateX(-distance);
+    if (Key.isDown(Key.D)) this.mesh.translateX(distance);
 
     var now = Date.now();
 
-    if (this.firing && now - this.lastShotTime >= this.weaponCooldown) {
+    if (Key.isDown(Key.SPACE) && now - this.lastShotTime >= this.weaponCooldown) {
         var randX = -this.spread + 2 * Math.random() * this.spread;
         Bullet.spawn(this, new THREE.Vector3(randX, 1, 0));
         this.lastShotTime = now;
@@ -341,4 +292,33 @@ Enemy.spawn = function (position, direction) {
 
     enemy.addToScene();
     GameObject.prototype.update.call(enemy);
+}
+
+
+function GlobalState() {
+    this.paused = false;
+    this.muted = localStorage.getItem('muted') || false;
+    this.muting = false;
+    this.pausing = false;
+}
+
+GlobalState.prototype.update = function () {
+    if (!this.pausing && Key.isDown(Key.P)) {
+        this.paused = !this.paused;
+        this.pausing = true;
+    }
+    if (!this.muting && Key.isDown(Key.M)) {
+        this.toggleMute();
+        this.muting = true;
+    }
+    
+    this.pausing = !Key.isDown(Key.P);
+    this.muting = !Key.isDown(Key.M);
+    
+}
+
+GlobalState.prototype.toggleMute = function () {
+    this.muted = !this.muted;
+    localStorage.setItem('muted', this.muted);
+    bgMusic.setMute(this.muted);
 }
