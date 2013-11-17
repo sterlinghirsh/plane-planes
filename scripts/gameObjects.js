@@ -1,4 +1,9 @@
 ﻿/// <reference path="three.js" />
+var enemies = [];
+var bullets = [];
+var player;
+var background;
+var clouds = [];
 
 function GameObject() {
     this.position = new THREE.Vector3(0, 0, 0);
@@ -31,7 +36,6 @@ GameObject.prototype.getMesh = function () {
     return this.mesh;
 }
 
-var player;
 function Player() {
     GameObject.call(this);
 
@@ -136,11 +140,24 @@ Player.prototype.update = function (delta) {
         this.lastShotTime = now;
     }
 
+    var maxX = WIDTH_HALF / 2 - 20;
+    var maxY = HEIGHT_HALF / 2 - 20;
+    if (this.position.x < -maxX) {
+        this.position.x = -maxX;
+    } else if (this.position.x > maxX) {
+        this.position.x = maxX;
+    }
+    
+    if (this.position.y < -maxY) {
+        this.position.y = -maxY;
+    } else if (this.position.y > maxY) {
+        this.position.y = maxY;
+    }
+
     this.position.z = this.layer;
     GameObject.prototype.update.call(this);
 }
 
-var bullets = [];
 function Bullet() {
     GameObject.call(this);
     this.texture = renderer.cache.getSet('bullet',THREE.ImageUtils.loadTexture('assets/bullet.png'));
@@ -161,10 +178,12 @@ Bullet.prototype.update = function (delta) {
 
     // collide with enemies
     for (var j = enemies.length - 1; j >= 0; j--) {
-        var enemy = enemies[i];
+        var enemy = enemies[j];
         if (enemy.layer == this.layer && distance(enemy.position.x, enemy.position.y, 
          this.position.x, this.position.y) < 10) {
             enemy.health -= 1;
+            this.destroy();
+            return false;
         }
     }
 
@@ -211,7 +230,6 @@ Bullet.spawn = function (creator, direction, speed) {
 }
 
 
-var background;
 function Background() {
     GameObject.call(this);
 
@@ -258,7 +276,6 @@ Cloud.prototype.update = function (delta) {
     GameObject.prototype.update.call(this);
 }
 
-var clouds = [];
 Cloud.generateClouds = function(numberToCreate) {
     while (clouds.length < numberToCreate) {
         var cloud = new Cloud();
@@ -273,33 +290,54 @@ Cloud.updateAll = function (delta) {
         }
 }
 
-var enemies = [];
 function Enemy() {
     GameObject.call(this);
     
-    this.texture = new THREE.ImageUtils.loadTexture('');
+    this.texture = new THREE.ImageUtils.loadTexture('assets/enemy1.png');
     this.material = new THREE.MeshBasicMaterial({ map: this.texture, transparent: true });
-    this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), this.material);
+    this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(5, 5), this.material);
     this.layer = Layers.MIDDLE;
     this.position = new THREE.Vector3(0, 0, 0);
     this.speed = 100.0;
-    this.health = 10;
+    this.health = 1;
+
+    enemies.push(this);
 }
 
 Enemy.prototype = new GameObject();
 
 Enemy.prototype.update = function (delta) {
     // should probably have different patterns of enemy behavior here
+    this.position.y += delta * this.ray.direction.y * this.layer;
+    this.position.x += delta * this.ray.direction.x * this.layer;
+    GameObject.prototype.update.call(this);
 }
 
 Enemy.updateAll = function(delta) {
     for (var i = enemies.length - 1; i >= 0; i--) {
         var enemy = enemies[i];
+        var destroy = false;
         if (enemy.health <= 0) {
-            enemy.destroy();
             score += 10;
+            destroy = true;
+        } else if (false === enemy.update(delta)) {
+            destroy = true;
         }
 
-        enemy.update(delta);
+        if (destroy) {
+            enemy.destroy();
+            enemies.splice(i, 1);
+        }
     }
+}
+
+Enemy.spawn = function (position, direction) {
+    var enemy = new Enemy();
+
+    enemy.position.copy(position);
+
+    enemy.ray = new THREE.Ray(position, direction);
+
+    enemy.addToScene();
+    GameObject.prototype.update.call(enemy);
 }

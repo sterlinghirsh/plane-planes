@@ -3,6 +3,7 @@
 <html>
     <head>
         <title>Plane Layer Game</title>
+        <link href='http://fonts.googleapis.com/css?family=Press+Start+2P' rel='stylesheet' type='text/css'>
         <style>
             #canvas {
                 z-index: 3;
@@ -18,18 +19,20 @@
 
             #scoreboard {
                 text-align: right;
-                color: black;
+                color: white;
                 position: absolute;
                 top: 0px;
                 right: 0px;
                 z-index: 0;
-                font-size: 16pt;
+                font-size: 16px;
                 margin: 0px;
-                padding: 0px;
+                padding: 10px;
             }
 
             body {
                 margin: 0px;
+                background-color: black;
+                font-family: 'Press Start 2P', monospace;
             }
 
             /** {
@@ -52,11 +55,6 @@
         <div id="canvas"></div>
         <div id="scoreboard">
             Score <span id="score">0</span>
-            <br/>
-            Client x: <span id="clientx">0</span>
-            <br/>
-            Client y: <span id="clienty">0</span>
-            <br/>
         </div>
     </body>
 </html>

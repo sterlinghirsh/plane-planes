@@ -27,6 +27,7 @@ var Layers = function () {
 
 var bgMusic;
 
+
 function setup() {
 
     init();
@@ -188,15 +189,21 @@ function render() {
 
 function update() {
     var delta = clock.getDelta();
+    
+    if (Math.random() <  0.01) {
+        var maxX = WIDTH_HALF / 2 - 20;
+        var randX = maxX - 2 * maxX * Math.random();
+        Enemy.spawn(new THREE.Vector3(randX, HEIGHT_HALF / 1.5, 2), new THREE.Vector3(0, -10, 0));
+    }
+
     Cloud.updateAll(delta);
     background.update(delta);
     Bullet.updateAll(delta);
+    Enemy.updateAll(delta);
     player.update(delta);
     updateScore();
     stats.update();
 }
-
-var enemies = [];
 
 
 
