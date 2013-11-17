@@ -181,7 +181,6 @@ function mainGameLoop() {
 };
 
 function render() {
-
     if (postprocessing.enabled) {
         renderer.clear();
         scene.overrideMaterial = null;
@@ -190,12 +189,9 @@ function render() {
         scene.overrideMaterial = material_depth;
         renderer.render(scene, camera, postprocessing.rtTextureDepth, true);
         renderer.render(postprocessing.scene, postprocessing.camera);
-    }
-    else {
+    } else {
         renderer.render(scene, camera);
     }
-    
-
 }
 
 function update() {

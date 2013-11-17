@@ -91,13 +91,16 @@ Bullet.prototype.update = function (delta) {
     // collide with enemies
     for (var j = enemies.length - 1; j >= 0; j--) {
         var enemy = enemies[i];
-        if (enemy.layer == bullet.layer && distance(enemy.position.x, enemy.position.y, bullet.position.x, bullet.position.y) < 10) {
+        if (enemy.layer == this.layer && distance(enemy.position.x, enemy.position.y, 
+         this.position.x, this.position.y) < 10) {
             enemy.health -= 1;
         }
     }
 
     // collide with player
-    if (player.layer == bullet.layer && bullet.owner != player && distance(player.position.x, player.position.y, bullet.position.x, bullet.position.y) < 10) {
+    if (player.layer == this.layer && this.owner != player && 
+     distance(player.position.x, player.position.y, this.position.x,
+      this.position.y) < 10) {
         player.health -= 1;
     }
 
