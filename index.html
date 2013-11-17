@@ -35,6 +35,16 @@
                 font-family: 'Press Start 2P', monospace;
             }
 
+            #gameOver {
+                position: absolute;
+                top: 30%;
+                left: 0;
+                right: 0;
+                text-align: center;
+                color: white;
+                display: none;
+            }
+
             /** {
                 cursor: none;
             }*/
@@ -55,6 +65,9 @@
         <div id="canvas"></div>
         <div id="scoreboard">
             Score <span id="score">0</span>
+        </div>
+        <div id="gameOver">
+            Game Over
         </div>
     </body>
 </html>

@@ -307,10 +307,23 @@ function Enemy() {
 Enemy.prototype = new GameObject();
 
 Enemy.prototype.update = function (delta) {
+    var toReturn = true;
     // should probably have different patterns of enemy behavior here
     this.position.y += delta * this.ray.direction.y * this.layer;
     this.position.x += delta * this.ray.direction.x * this.layer;
+
+    // collide with player
+    if (player.layer == this.layer &&  
+     distance(player.position.x, player.position.y, this.position.x,
+      this.position.y) < 8 * this.layer) {
+        player.health -= 1;
+        playerCrashed = true;
+        toReturn = false;
+    }
+
     GameObject.prototype.update.call(this);
+
+    return toReturn;
 }
 
 Enemy.updateAll = function(delta) {

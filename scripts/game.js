@@ -4,6 +4,7 @@
 const windowMargin = 10;
 
 var score = 0;
+var playerCrashed = false;
 
 var scene, renderer, container, cube, camera, projector, clock, material_depth;
 
@@ -188,29 +189,36 @@ function render() {
 }
 
 function update() {
-    var delta = clock.getDelta();
-    
-    if (Math.random() <  0.01) {
-        var maxX = WIDTH_HALF / 2 - 20;
-        var randX = maxX - 2 * maxX * Math.random();
-        var randLayer = Math.random();
-        var layer;
-        if (randLayer < .33) {
-            layer = Layers.BOTTOM;
-        } else if (randLayer < .66) {
-            layer = Layers.MIDDLE;
-        } else {
-            layer = Layers.TOP;
-        }
-        Enemy.spawn(new THREE.Vector3(randX, HEIGHT_HALF / 1.5, layer), new THREE.Vector3(0, -10, 0));
-    }
 
-    Cloud.updateAll(delta);
-    background.update(delta);
-    Bullet.updateAll(delta);
-    Enemy.updateAll(delta);
-    player.update(delta);
-    updateScore();
+    if (playerCrashed) {
+        document.getElementById('gameOver').style.display = "block";
+    } else {
+        var delta = clock.getDelta();
+        
+        // Change this for increased difficulty.
+        var enemySpawnChance = 0.01
+        if (Math.random() < enemySpawnChance) {
+            var maxX = WIDTH_HALF / 2 - 20;
+            var randX = maxX - 2 * maxX * Math.random();
+            var randLayer = Math.random();
+            var layer;
+            if (randLayer < .33) {
+                layer = Layers.BOTTOM;
+            } else if (randLayer < .66) {
+                layer = Layers.MIDDLE;
+            } else {
+                layer = Layers.TOP;
+            }
+            Enemy.spawn(new THREE.Vector3(randX, HEIGHT_HALF / 1.5, layer), new THREE.Vector3(0, -10, 0));
+        }
+
+        Cloud.updateAll(delta);
+        background.update(delta);
+        Bullet.updateAll(delta);
+        Enemy.updateAll(delta);
+        player.update(delta);
+        updateScore();
+    }
     stats.update();
 }
 
