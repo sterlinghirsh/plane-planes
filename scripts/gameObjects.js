@@ -84,7 +84,8 @@ Player.prototype.update = function (delta) {
     if (!Key.isDown(Key.Q) && !Key.isDown(Key.E) && !Mouse.isDown(Mouse.LEFT_MOUSE) && !Mouse.isDown(Mouse.RIGHT_MOUSE)) this.changingLayers = false;
 
     var distance = this.speed * delta;
-    this.mesh.rotation.z = Math.atan(mouseY/mouseX) - Math.PI / 2 + (mouseX < 0 ? Math.PI : 0);
+    //TODO: Free movement
+    //this.mesh.rotation.z = Math.atan(mouseY/mouseX) - Math.PI / 2 + (mouseX < 0 ? Math.PI : 0);
     if (Key.isDown(Key.W)) this.mesh.translateY(distance);
     if (Key.isDown(Key.S)) this.mesh.translateY(-distance);
     if (Key.isDown(Key.A)) this.mesh.translateX(-distance);
@@ -95,8 +96,8 @@ Player.prototype.update = function (delta) {
         var randX = -this.spread + 2 * Math.random() * this.spread;
         var randY = -this.spread + 2 * Math.random() * this.spread;
 
-        Bullet.spawn(this, new THREE.Vector3(mouseX, mouseY, 0).normalize(), 
-         100 + Math.random() * 20, true);
+        //Bullet.spawn(this, new THREE.Vector3(mouseX, mouseY, 0).normalize(), 100 + Math.random() * 20, true);
+        Bullet.spawn(this, new THREE.Vector3(randX, 1, 0), 100 + Math.random() * 20, true);
         this.lastShotTime = now;
     }
 
@@ -436,6 +437,7 @@ GlobalState.prototype.update = function () {
 
 GlobalState.prototype.togglePause = function () {
     this.paused = !this.paused;
+    document.getElementById('paused').style.display = this.paused && !playerCrashed ? "block" : "none";
     createjs.Sound.setMute(this.muted || this.paused);
     this.pausing = true;
 }
@@ -444,4 +446,5 @@ GlobalState.prototype.toggleMute = function () {
     this.muted = !this.muted
     createjs.Sound.setMute(this.muted);
     localStorage.setItem('muted', this.muted);
+    this.muting = true;
 }

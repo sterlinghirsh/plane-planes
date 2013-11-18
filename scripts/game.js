@@ -84,6 +84,11 @@ function init() {
     container = document.getElementById("canvas");
     container.appendChild(renderer.domElement);
 
+    //TODO: lock pointer for free movement
+    //container.addEventListener('click', function (event) {
+    //    container.requestFullscreen();
+    //}, false);
+
     setupModels();
 
     clock = new THREE.Clock();
@@ -179,7 +184,8 @@ function update() {
 
     if (playerCrashed) {
         document.getElementById('gameOver').style.display = "block";
-    } else {
+    }
+    else {
         var delta = clock.getDelta();
         
         if (!globalState.paused) {
