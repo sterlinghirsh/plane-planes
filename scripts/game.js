@@ -184,7 +184,8 @@ function update() {
 
     if (playerCrashed) {
         document.getElementById('gameOver').style.display = "block";
-    } else {
+    }
+    else {
         var delta = clock.getDelta();
         
         if (!globalState.paused) {

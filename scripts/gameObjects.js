@@ -426,6 +426,7 @@ GlobalState.prototype.update = function () {
 
 GlobalState.prototype.togglePause = function () {
     this.paused = !this.paused;
+    document.getElementById('paused').style.display = this.paused ? "block" : "none";
     createjs.Sound.setMute(this.muted || this.paused);
     this.pausing = true;
 }
