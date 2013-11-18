@@ -118,12 +118,11 @@ Player.prototype.update = function (delta) {
     GameObject.prototype.update.call(this);
 }
 
-function Bullet() {
+function Bullet(playerBullet, layer) {
     GameObject.call(this);
-    this.texture = renderer.cache.getSet('bullet',THREE.ImageUtils.loadTexture('assets/bullet.png'));
-    this.material = new THREE.MeshBasicMaterial({ map: this.texture, transparent: true });
-    this.mesh = new THREE.Mesh(new THREE.SphereGeometry(2, 6, 6), this.material);
-    this.speed = 0;;
+    this.speed = 0;
+
+
     bullets.push(this);
 }
 
@@ -149,10 +148,11 @@ Bullet.prototype.update = function (delta) {
         }
     } else {
         // collide with player
-        if (player.layer == this.layer && this.owner != player && 
+        if (player.layer == this.layer  && 
          distance(player.position.x, player.position.y, this.position.x,
           this.position.y) < 10) {
-            player.health -= 1;
+            playerCrashed = true;
+            return false;
         }
     }
 
@@ -176,6 +176,17 @@ Bullet.spawn = function (creator, direction, speed, playerBullet) {
         return;
     
     var bullet = new Bullet();
+    if (playerBullet) {
+        bullet.texture = renderer.cache.getSet('bullet',THREE.ImageUtils.loadTexture('assets/bullet.png'));
+    } else if (creator.layer === Layers.TOP) {
+        bullet.texture = renderer.cache.getSet('bulletred',THREE.ImageUtils.loadTexture('assets/bullet-red.png'));
+    } else if (creator.layer === Layers.MIDDLE) {
+        bullet.texture = renderer.cache.getSet('bulletyellow',THREE.ImageUtils.loadTexture('assets/bullet-yellow.png'));
+    } else {
+        bullet.texture = renderer.cache.getSet('bulletgreen',THREE.ImageUtils.loadTexture('assets/bullet-green.png'));
+    }
+    bullet.material = new THREE.MeshBasicMaterial({ map: bullet.texture, transparent: true });
+    bullet.mesh = new THREE.Mesh(new THREE.SphereGeometry(1.5, 6, 6), bullet.material);
 
     if (speed !== undefined) {
         bullet.speed = speed;
