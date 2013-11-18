@@ -26,7 +26,7 @@ var Layers = function () {
     }
 }();
 
-var bgMusic;
+var bgMusic = null;
 var globalState;
 
 
@@ -54,6 +54,9 @@ function setup() {
                     loop: -1,
                     volume: 0.2
                 });
+                if (localStorage.getItem('muted')) {
+                    bgMusic.setMute(true);
+                }
         });
 
         createjs.Sound.registerManifest(manifest);
@@ -183,11 +186,11 @@ function render() {
 }
 
 function update() {
+    globalState.update();
     if (playerCrashed) {
         document.getElementById('gameOver').style.display = "block";
     } else {
         var delta = clock.getDelta();
-        globalState.update();
         
         if (!globalState.paused) {
             // Change this for increased difficulty.
