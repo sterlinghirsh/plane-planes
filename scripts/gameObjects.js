@@ -1,4 +1,7 @@
 ﻿/// <reference path="three.js" />
+/// <reference path="keyboard.js" />
+/// <reference path="mouse.js" />
+
 var enemies = [];
 var bullets = [];
 var player;
@@ -58,16 +61,16 @@ Player.prototype = new GameObject();
 
 Player.prototype.update = function (delta) {
     
-    if (!this.changingLayers && Key.isDown(Key.Q) && this.layer != Layers.TOP) {
+    if (!this.changingLayers && (Key.isDown(Key.Q) || Mouse.isDown(Mouse.LEFT_MOUSE)) && this.layer != Layers.TOP) {
         this.layer++;
         this.changingLayers = true;
     }
-    if (!this.changingLayers && Key.isDown(Key.E) && this.layer != Layers.BOTTOM) {
+    if (!this.changingLayers && (Key.isDown(Key.E) || Mouse.isDown(Mouse.RIGHT_MOUSE)) && this.layer != Layers.BOTTOM) {
         this.layer--;
         this.changingLayers = true;
     }
 
-    if (!Key.isDown(Key.Q) && !Key.isDown(Key.E)) this.changingLayers = false;
+    if (!Key.isDown(Key.Q) && !Key.isDown(Key.E) && !Mouse.isDown(Mouse.LEFT_MOUSE) && !Mouse.isDown(Mouse.RIGHT_MOUSE)) this.changingLayers = false;
 
     var distance = this.speed * delta;
 
@@ -78,9 +81,12 @@ Player.prototype.update = function (delta) {
 
     var now = Date.now();
 
+    var mouseX = Mouse.getX();
+    var mouseY = Mouse.getY();
     if (Key.isDown(Key.SPACE) && now - this.lastShotTime >= this.weaponCooldown) {
         var randX = -this.spread + 2 * Math.random() * this.spread;
-        Bullet.spawn(this, new THREE.Vector3(randX, 1, 0));
+        var randY = -this.spread + 2 * Math.random() * this.spread;
+        Bullet.spawn(this, new THREE.Vector3(mouseX, mouseY, 0).normalize());
         this.lastShotTime = now;
     }
 
@@ -99,6 +105,7 @@ Player.prototype.update = function (delta) {
     }
 
     this.position.z = this.layer;
+    this.mesh.rotation.z = Math.atan(mouseY/mouseX) - Math.PI / 2 + (mouseX < 0 ? Math.PI : 0);
     GameObject.prototype.update.call(this);
 }
 
@@ -333,8 +340,4 @@ GlobalState.prototype.toggleMute = function () {
     this.muted = !this.muted
     createjs.Sound.setMute(this.muted);
     localStorage.setItem('muted', this.muted);
-    if (bgMusic) {
-        bgMusic.setMute(this.muted);
-        this.muting = true;
-    }
 }
