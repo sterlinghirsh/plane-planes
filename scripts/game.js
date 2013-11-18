@@ -46,9 +46,6 @@ function setup() {
                     loop: -1,
                     volume: 0.2
                 });
-                if (localStorage.getItem('muted') === 'true' && bgMusic) {
-                    bgMusic.setMute(true);
-                }
             }
         });
 
@@ -81,7 +78,6 @@ function init() {
 
     camera = new THREE.OrthographicCamera(WIDTH_HALF / -2, WIDTH_HALF / 2, HEIGHT_HALF / 2, HEIGHT_HALF / -2, -500, 2000);
     camera.position.z = 10;
-    camera.position.y = 0;
     camera.lookAt(new THREE.Vector3(0, 0, 0));
     scene.add(camera);
 
@@ -180,6 +176,7 @@ function render() {
 
 function update() {
     globalState.update();
+
     if (playerCrashed) {
         document.getElementById('gameOver').style.display = "block";
     } else {

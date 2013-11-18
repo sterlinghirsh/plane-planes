@@ -35,7 +35,7 @@
                 font-family: 'Press Start 2P', monospace;
             }
 
-            #gameOver {
+            .alertText {
                 position: absolute;
                 top: 30%;
                 left: 0;
@@ -45,9 +45,9 @@
                 display: none;
             }
 
-            /** {
+            * {
                 cursor: none;
-            }*/
+            }
         </style>
     </head>
 
@@ -67,8 +67,12 @@
         <div id="scoreboard">
             Score <span id="score">0</span>
         </div>
-        <div id="gameOver">
+        <div id="gameOver" class="alertText">
             Game Over
+        </div>
+
+        <div id="paused" class="alertText">
+            Paused
         </div>
     </body>
 </html>
