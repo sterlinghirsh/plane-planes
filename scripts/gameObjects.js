@@ -2,6 +2,12 @@
 /// <reference path="keyboard.js" />
 /// <reference path="mouse.js" />
 
+var Layers = {
+    'BOTTOM': 1,
+    'MIDDLE': 2,
+    'TOP': 3
+};
+
 var enemies = [];
 var bullets = [];
 var player;
@@ -74,10 +80,10 @@ Player.prototype.update = function (delta) {
 
     var distance = this.speed * delta;
 
-    if (Key.isDown(Key.W)) this.mesh.translateY(distance);
-    if (Key.isDown(Key.S)) this.mesh.translateY(-distance);
-    if (Key.isDown(Key.A)) this.mesh.translateX(-distance);
-    if (Key.isDown(Key.D)) this.mesh.translateX(distance);
+    if (Key.isDown(Key.W)) this.mesh.position.y += distance;
+    if (Key.isDown(Key.S)) this.mesh.position.y -= distance;
+    if (Key.isDown(Key.A)) this.mesh.position.x -= distance;
+    if (Key.isDown(Key.D)) this.mesh.position.x += distance;
 
     var now = Date.now();
 
@@ -232,6 +238,7 @@ Cloud.generateClouds = function(numberToCreate) {
         var cloud = new Cloud();
         clouds.push(cloud);
         cloud.addToScene();
+      GameObject.prototype.update.call(cloud);
     }
 }
 
@@ -243,16 +250,6 @@ Cloud.updateAll = function (delta) {
 
 function Enemy() {
     GameObject.call(this);
-    
-    this.texture = new THREE.ImageUtils.loadTexture('assets/enemy1.png');
-    this.material = new THREE.MeshBasicMaterial({ map: this.texture, transparent: true });
-    this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(5, 5), this.material);
-    this.layer = Layers.MIDDLE;
-    this.position = new THREE.Vector3(0, 0, 0);
-    this.speed = 100.0;
-    this.health = 1;
-
-    enemies.push(this);
 }
 
 Enemy.prototype = new GameObject();
@@ -282,10 +279,10 @@ Enemy.updateAll = function(delta) {
         var enemy = enemies[i];
         var destroy = false;
         if (enemy.health <= 0) {
-            score += 10;
+            score += enemy.score;
             destroy = true;
-        } else if (false === enemy.update(delta)) {
-            destroy = true;
+        } else {
+            enemy.update(delta);
         }
 
         if (destroy) {
@@ -295,8 +292,26 @@ Enemy.updateAll = function(delta) {
     }
 }
 
-Enemy.spawn = function (position, direction) {
-    var enemy = new Enemy();
+function Bomber() {
+    Enemy.call(this);
+    this.layer = Layers.MIDDLE;
+    this.position = new THREE.Vector3(0, 0, 0);
+    this.texture = new THREE.ImageUtils.loadTexture('assets/bomber.png');
+    this.material = new THREE.MeshBasicMaterial({ map: this.texture, transparent: true });
+    this.size = 10;
+    this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(this.size, this.size),
+     this.material);
+    this.mesh.rotation.z = Math.PI;
+    this.speed = 100.0;
+    this.health = 1;
+    this.score = 10;
+    enemies.push(this);
+}
+
+Bomber.prototype = new Enemy();
+
+Bomber.spawn = function(position, direction) {
+    var enemy = new Bomber();
 
     enemy.position.copy(position);
 
@@ -305,12 +320,12 @@ Enemy.spawn = function (position, direction) {
 
     enemy.addToScene();
     GameObject.prototype.update.call(enemy);
-}
+};
 
 
 function GlobalState() {
     this.paused = false;
-    this.muted = localStorage.getItem('muted') || false;
+    this.muted = localStorage.getItem('muted') === 'true';
     createjs.Sound.setMute(this.muted);
     this.muting = false;
     this.pausing = false;

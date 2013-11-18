@@ -4,7 +4,6 @@ document.addEventListener('mouseup', function (event) { Mouse.onMouseUp.call(thi
 document.oncontextmenu = disableContextMenu;
 
 function disableContextMenu(event) { event.stopPropagation(); return false; };
-
 var Mouse = {
     _x: 0,
     _y: 0,
@@ -45,3 +44,8 @@ var Mouse = {
 
     isDown: function(button) { return !!this._pressed[button]; }
 };
+
+document.addEventListener('mousemove', Mouse.onMouseMove, false);
+document.addEventListener('mousedown', Mouse.onMouseDown, false);
+document.addEventListener('mouseup', Mouse.onMouseUp, false);
+

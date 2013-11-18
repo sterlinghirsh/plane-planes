@@ -18,14 +18,6 @@ const bulletSpeed = 100;
 // need a better DOF setup, but will work on mechanics first
 var postprocessing = { enabled: false };
 
-var Layers = function () {
-    return {
-        'BOTTOM': 1,
-        'MIDDLE': 2,
-        'TOP': 3
-    }
-}();
-
 var bgMusic = null;
 var globalState;
 
@@ -48,12 +40,13 @@ function setup() {
 
         createjs.Sound.addEventListener("fileload", function(ev) {
             // Initialize Music
-            if (ev.id == 'Music2')
+            if (ev.id == 'Music2') {
                 bgMusic = createjs.Sound.play(ev.src, {
                     interrupt: createjs.Sound.INTERRUPT_ANY,
                     loop: -1,
                     volume: 0.2
                 });
+            }
         });
 
         createjs.Sound.registerManifest(manifest);
@@ -196,7 +189,7 @@ function update() {
                 var maxX = WIDTH_HALF / 2 - 20;
                 var randX = maxX - 2 * maxX * Math.random();
                 var layer = Math.round(Math.random() * 3);
-                Enemy.spawn(new THREE.Vector3(randX, HEIGHT_HALF / 1.5, layer), new THREE.Vector3(0, -10, 0));
+                Bomber.spawn(new THREE.Vector3(randX, HEIGHT_HALF / 1.5, layer), new THREE.Vector3(0, -10, 0));
             }
             
 
