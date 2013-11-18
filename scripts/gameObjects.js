@@ -84,19 +84,20 @@ Player.prototype.update = function (delta) {
     if (!Key.isDown(Key.Q) && !Key.isDown(Key.E) && !Mouse.isDown(Mouse.LEFT_MOUSE) && !Mouse.isDown(Mouse.RIGHT_MOUSE)) this.changingLayers = false;
 
     var distance = this.speed * delta;
-    this.mesh.rotation.z = Math.atan(mouseY/mouseX) - Math.PI / 2 + (mouseX < 0 ? Math.PI : 0);
+    //TODO: Free movement
+    //this.mesh.rotation.z = Math.atan(mouseY/mouseX) - Math.PI / 2 + (mouseX < 0 ? Math.PI : 0);
     if (Key.isDown(Key.W)) this.mesh.translateY(distance);
-    //if (Key.isDown(Key.S)) this.mesh.translateY(-distance);
-    //if (Key.isDown(Key.A)) this.mesh.translateX(-distance);
-    //if (Key.isDown(Key.D)) this.mesh.translateX (distance);
+    if (Key.isDown(Key.S)) this.mesh.translateY(-distance);
+    if (Key.isDown(Key.A)) this.mesh.translateX(-distance);
+    if (Key.isDown(Key.D)) this.mesh.translateX (distance);
 
     var now = Date.now();
     if (Key.isDown(Key.SPACE) && now - this.lastShotTime >= this.weaponCooldown) {
         var randX = -this.spread + 2 * Math.random() * this.spread;
         var randY = -this.spread + 2 * Math.random() * this.spread;
 
-        Bullet.spawn(this, new THREE.Vector3(mouseX, mouseY, 0).normalize(), 
-         100 + Math.random() * 20, true);
+        //Bullet.spawn(this, new THREE.Vector3(mouseX, mouseY, 0).normalize(), 100 + Math.random() * 20, true);
+        Bullet.spawn(this, new THREE.Vector3(randX, 1, 0), 100 + Math.random() * 20, true);
         this.lastShotTime = now;
     }
 

@@ -84,9 +84,10 @@ function init() {
     container = document.getElementById("canvas");
     container.appendChild(renderer.domElement);
 
-    container.addEventListener('click', function (event) {
-        container.requestFullscreen();
-    }, false);
+    //TODO: lock pointer for free movement
+    //container.addEventListener('click', function (event) {
+    //    container.requestFullscreen();
+    //}, false);
 
     setupModels();
 
