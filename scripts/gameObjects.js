@@ -67,6 +67,10 @@ Player.prototype = new GameObject();
 
 Player.prototype.update = function (delta) {
     
+
+    var mouseX = Mouse.getX();
+    var mouseY = Mouse.getY();
+
     if (!this.changingLayers && (Key.isDown(Key.Q) || Mouse.isDown(Mouse.LEFT_MOUSE)) && this.layer != Layers.TOP) {
         this.layer++;
         this.changingLayers = true;
@@ -79,16 +83,13 @@ Player.prototype.update = function (delta) {
     if (!Key.isDown(Key.Q) && !Key.isDown(Key.E) && !Mouse.isDown(Mouse.LEFT_MOUSE) && !Mouse.isDown(Mouse.RIGHT_MOUSE)) this.changingLayers = false;
 
     var distance = this.speed * delta;
-
-    if (Key.isDown(Key.W)) this.mesh.position.y += distance;
-    if (Key.isDown(Key.S)) this.mesh.position.y -= distance;
-    if (Key.isDown(Key.A)) this.mesh.position.x -= distance;
-    if (Key.isDown(Key.D)) this.mesh.position.x += distance;
+    this.mesh.rotation.z = Math.atan(mouseY/mouseX) - Math.PI / 2 + (mouseX < 0 ? Math.PI : 0);
+    if (Key.isDown(Key.W)) this.mesh.translateY(distance);
+    if (Key.isDown(Key.S)) this.mesh.translateY(-distance);
+    if (Key.isDown(Key.A)) this.mesh.translateX(-distance);
+    if (Key.isDown(Key.D)) this.mesh.translateX (distance);
 
     var now = Date.now();
-
-    var mouseX = Mouse.getX();
-    var mouseY = Mouse.getY();
     if (Key.isDown(Key.SPACE) && now - this.lastShotTime >= this.weaponCooldown) {
         var randX = -this.spread + 2 * Math.random() * this.spread;
         var randY = -this.spread + 2 * Math.random() * this.spread;
@@ -111,7 +112,6 @@ Player.prototype.update = function (delta) {
     }
 
     this.position.z = this.layer;
-    this.mesh.rotation.z = Math.atan(mouseY/mouseX) - Math.PI / 2 + (mouseX < 0 ? Math.PI : 0);
     GameObject.prototype.update.call(this);
 }
 
