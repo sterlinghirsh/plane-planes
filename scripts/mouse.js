@@ -1,8 +1,4 @@
-﻿document.addEventListener('mousemove', Mouse.onMouseMove, false);
-document.addEventListener('mousedown', Mouse.onMouseDown, false);
-document.addEventListener('mouseup', Mouse.onMouseUp, false);
-
-var Mouse = {
+﻿var Mouse = {
     _x: 0,
     _y: 0,
     _pressed: {},
@@ -17,16 +13,21 @@ var Mouse = {
 
     onMouseDown: function(event) {
         event.preventDefault();
-        event.stopPropogation();
+        event.stopPropagation();
         this._pressed[event.which] = true;
     },
 
     onMouseUp: function (event) {
         event.preventDefault();
-        event.stopPropogation();
+        event.stopPropagation();
         this._pressed[event.which] = false;
     },
 
     getX: function() { return _x; },
     getY: function() { return _y; }
 };
+
+document.addEventListener('mousemove', Mouse.onMouseMove, false);
+document.addEventListener('mousedown', Mouse.onMouseDown, false);
+document.addEventListener('mouseup', Mouse.onMouseUp, false);
+
