@@ -85,9 +85,9 @@ Player.prototype.update = function (delta) {
     var distance = this.speed * delta;
     this.mesh.rotation.z = Math.atan(mouseY/mouseX) - Math.PI / 2 + (mouseX < 0 ? Math.PI : 0);
     if (Key.isDown(Key.W)) this.mesh.translateY(distance);
-    if (Key.isDown(Key.S)) this.mesh.translateY(-distance);
-    if (Key.isDown(Key.A)) this.mesh.translateX(-distance);
-    if (Key.isDown(Key.D)) this.mesh.translateX (distance);
+    //if (Key.isDown(Key.S)) this.mesh.translateY(-distance);
+    //if (Key.isDown(Key.A)) this.mesh.translateX(-distance);
+    //if (Key.isDown(Key.D)) this.mesh.translateX (distance);
 
     var now = Date.now();
     if (Key.isDown(Key.SPACE) && now - this.lastShotTime >= this.weaponCooldown) {

@@ -84,6 +84,10 @@ function init() {
     container = document.getElementById("canvas");
     container.appendChild(renderer.domElement);
 
+    container.addEventListener('click', function (event) {
+        container.requestFullscreen();
+    }, false);
+
     setupModels();
 
     clock = new THREE.Clock();
