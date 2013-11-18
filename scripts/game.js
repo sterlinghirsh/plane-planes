@@ -59,13 +59,6 @@ function setup() {
         createjs.Sound.registerManifest(manifest);
     }
 
-    // disable accidental right clicks triggering the context menu
-    $(document).ready(function () {
-        $(document).bind("contextmenu", function (e) {
-            return false;
-        });
-    });
-
     mainGameLoop();
 }
 
@@ -198,13 +191,14 @@ function update() {
         
         if (!globalState.paused) {
             // Change this for increased difficulty.
-        if (Math.random() <  0.01) {
+            var enemySpawnChance = 0.01
             if (Math.random() < enemySpawnChance) {
                 var maxX = WIDTH_HALF / 2 - 20;
                 var randX = maxX - 2 * maxX * Math.random();
-            var layer = Math.round(Math.random() * 3);            
+                var layer = Math.round(Math.random() * 3);
                 Enemy.spawn(new THREE.Vector3(randX, HEIGHT_HALF / 1.5, layer), new THREE.Vector3(0, -10, 0));
             }
+            
 
             Cloud.updateAll(delta);
             background.update(delta);
