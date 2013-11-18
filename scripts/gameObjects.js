@@ -56,6 +56,7 @@ function Player() {
     this.weaponCooldown = 200;
     this.lastShotTime = 0;
     this.spread = 0.1;
+    this.size = 10;
 
     this.changingLayers = false;
 }
@@ -130,7 +131,7 @@ Bullet.prototype.update = function (delta) {
     for (var j = enemies.length - 1; j >= 0; j--) {
         var enemy = enemies[j];
         if (enemy.layer == this.layer && distance(enemy.position.x, enemy.position.y, 
-         this.position.x, this.position.y) < 10) {
+         this.position.x, this.position.y) < enemy.size) {
             enemy.health -= 1;
             this.destroy();
             return false;
@@ -250,8 +251,8 @@ Enemy.prototype = new GameObject();
 Enemy.prototype.update = function (delta) {
     var toReturn = true;
     // should probably have different patterns of enemy behavior here
-    this.position.y += delta * this.ray.direction.y * this.layer;
-    this.position.x += delta * this.ray.direction.x * this.layer;
+    this.position.y += delta * this.speed * this.ray.direction.y * this.layer;
+    this.position.x += delta * this.speed * this.ray.direction.x * this.layer;
 
     // collide with player
     if (player.layer == this.layer &&  
@@ -291,13 +292,13 @@ function Bomber() {
     this.position = new THREE.Vector3(0, 0, 0);
     this.texture = new THREE.ImageUtils.loadTexture('assets/bomber.png');
     this.material = new THREE.MeshBasicMaterial({ map: this.texture, transparent: true });
-    this.size = 10;
+    this.size = 14;
     this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(this.size, this.size),
      this.material);
     this.mesh.rotation.z = Math.PI;
-    this.speed = 100.0;
-    this.health = 1;
-    this.score = 10;
+    this.speed = 8;
+    this.health = 3;
+    this.score = 25;
     enemies.push(this);
 }
 
@@ -315,6 +316,34 @@ Bomber.spawn = function(position, direction) {
     GameObject.prototype.update.call(enemy);
 };
 
+function Fighter() {
+    Enemy.call(this);
+    this.layer = Layers.MIDDLE;
+    this.position = new THREE.Vector3(0, 0, 0);
+    this.texture = new THREE.ImageUtils.loadTexture('assets/airplane2b.png');
+    this.material = new THREE.MeshBasicMaterial({ map: this.texture, transparent: true });
+    this.size = 10;
+    this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(this.size, this.size),
+     this.material);
+    this.speed = 20;
+    this.health = 1;
+    this.score = 10;
+    enemies.push(this);
+}
+
+Fighter.prototype = new Enemy();
+
+Fighter.spawn = function(position, direction) {
+    var enemy = new Fighter();
+
+    enemy.position.copy(position);
+
+    enemy.ray = new THREE.Ray(position, direction);
+    enemy.layer = position.z;
+
+    enemy.addToScene();
+    GameObject.prototype.update.call(enemy);
+};
 
 function GlobalState() {
     this.paused = false;
