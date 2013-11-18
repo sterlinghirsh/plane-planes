@@ -59,6 +59,7 @@ function Player() {
     this.weaponCooldown = 200;
     this.lastShotTime = 0;
     this.spread = 0.1;
+    this.size = 10;
 
     this.changingLayers = false;
 }
@@ -93,7 +94,9 @@ Player.prototype.update = function (delta) {
     if (Key.isDown(Key.SPACE) && now - this.lastShotTime >= this.weaponCooldown) {
         var randX = -this.spread + 2 * Math.random() * this.spread;
         var randY = -this.spread + 2 * Math.random() * this.spread;
-        Bullet.spawn(this, new THREE.Vector3(mouseX, mouseY, 0).normalize());
+
+        Bullet.spawn(this, new THREE.Vector3(mouseX, mouseY, 0).normalize(), 
+         100 + Math.random() * 20, true);
         this.lastShotTime = now;
     }
 
@@ -120,7 +123,7 @@ function Bullet() {
     this.texture = renderer.cache.getSet('bullet',THREE.ImageUtils.loadTexture('assets/bullet.png'));
     this.material = new THREE.MeshBasicMaterial({ map: this.texture, transparent: true });
     this.mesh = new THREE.Mesh(new THREE.SphereGeometry(2, 6, 6), this.material);
-    this.speed = 100 + Math.random() * 20;
+    this.speed = 0;;
     bullets.push(this);
 }
 
@@ -133,22 +136,24 @@ Bullet.prototype.update = function (delta) {
         return false;
     }
 
-    // collide with enemies
-    for (var j = enemies.length - 1; j >= 0; j--) {
-        var enemy = enemies[j];
-        if (enemy.layer == this.layer && distance(enemy.position.x, enemy.position.y, 
-         this.position.x, this.position.y) < 10) {
-            enemy.health -= 1;
-            this.destroy();
-            return false;
+    if (this.playerBullet) {
+        // collide with enemies
+        for (var j = enemies.length - 1; j >= 0; j--) {
+            var enemy = enemies[j];
+            if (enemy.layer == this.layer && distance(enemy.position.x, enemy.position.y, 
+             this.position.x, this.position.y) < enemy.size) {
+                enemy.health -= 1;
+                this.destroy();
+                return false;
+            }
         }
-    }
-
-    // collide with player
-    if (player.layer == this.layer && this.owner != player && 
-     distance(player.position.x, player.position.y, this.position.x,
-      this.position.y) < 10) {
-        player.health -= 1;
+    } else {
+        // collide with player
+        if (player.layer == this.layer && this.owner != player && 
+         distance(player.position.x, player.position.y, this.position.x,
+          this.position.y) < 10) {
+            player.health -= 1;
+        }
     }
 
     this.position.y += this.speed * delta * this.ray.direction.y * this.layer;
@@ -166,21 +171,23 @@ Bullet.updateAll = function(delta) {
     }
 }
 
-Bullet.spawn = function (creator, direction, speed) {
+Bullet.spawn = function (creator, direction, speed, playerBullet) {
     if (creator === undefined)
         return;
     
     var bullet = new Bullet();
 
-    if (speed % 1 === speed) {
+    if (speed !== undefined) {
         bullet.speed = speed;
     }
+
     bullet.position.set(creator.position.x, creator.position.y, creator.position.z);
 
     bullet.ray = new THREE.Ray(creator.position, direction);
 
     bullet.layer = creator.layer;
     bullet.owner = creator;
+    bullet.playerBullet = playerBullet;
 
     bullet.addToScene();
     GameObject.prototype.update.call(bullet);
@@ -254,26 +261,6 @@ function Enemy() {
 
 Enemy.prototype = new GameObject();
 
-Enemy.prototype.update = function (delta) {
-    var toReturn = true;
-    // should probably have different patterns of enemy behavior here
-    this.position.y += delta * this.ray.direction.y * this.layer;
-    this.position.x += delta * this.ray.direction.x * this.layer;
-
-    // collide with player
-    if (player.layer == this.layer &&  
-     distance(player.position.x, player.position.y, this.position.x,
-      this.position.y) < 8 * this.layer) {
-        player.health -= 1;
-        playerCrashed = true;
-        toReturn = false;
-    }
-
-    GameObject.prototype.update.call(this);
-
-    return toReturn;
-}
-
 Enemy.updateAll = function(delta) {
     for (var i = enemies.length - 1; i >= 0; i--) {
         var enemy = enemies[i];
@@ -298,13 +285,14 @@ function Bomber() {
     this.position = new THREE.Vector3(0, 0, 0);
     this.texture = new THREE.ImageUtils.loadTexture('assets/bomber.png');
     this.material = new THREE.MeshBasicMaterial({ map: this.texture, transparent: true });
-    this.size = 10;
+    this.size = 14;
     this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(this.size, this.size),
      this.material);
     this.mesh.rotation.z = Math.PI;
-    this.speed = 100.0;
-    this.health = 1;
-    this.score = 10;
+    this.speed = 8;
+    this.health = 3;
+    this.score = 25;
+    this.fireChance = 0.005;
     enemies.push(this);
 }
 
@@ -322,6 +310,96 @@ Bomber.spawn = function(position, direction) {
     GameObject.prototype.update.call(enemy);
 };
 
+Bomber.prototype.update = function (delta) {
+    var toReturn = true;
+    // should probably have different patterns of enemy behavior here
+    this.position.y += delta * this.speed * this.ray.direction.y * this.layer;
+    this.position.x += delta * this.speed * this.ray.direction.x * this.layer;
+
+    // collide with player
+    if (player.layer == this.layer &&  
+     distance(player.position.x, player.position.y, this.position.x,
+      this.position.y) < 0.5 * this.size * this.layer) {
+        player.health -= 1;
+        playerCrashed = true;
+        toReturn = false;
+    } else if (Math.random() < this.fireChance) {
+        // Fire!
+        var bulletDirection1 = new THREE.Vector3();
+        var bulletDirection2 = new THREE.Vector3();
+        var bulletDirection3 = new THREE.Vector3();
+        bulletDirection1.copy(this.ray.direction);
+        bulletDirection2.copy(this.ray.direction);
+        bulletDirection3.copy(this.ray.direction);
+        
+        bulletDirection2.applyAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI/6);
+        bulletDirection3.applyAxisAngle(new THREE.Vector3(0, 0, 1), -Math.PI/6);
+
+        Bullet.spawn(this, bulletDirection1.normalize(), 50, false);
+        Bullet.spawn(this, bulletDirection2.normalize(), 50, false);
+        Bullet.spawn(this, bulletDirection3.normalize(), 50, false);
+    }
+
+    GameObject.prototype.update.call(this);
+
+    return toReturn;
+}
+
+
+function Fighter() {
+    Enemy.call(this);
+    this.layer = Layers.MIDDLE;
+    this.position = new THREE.Vector3(0, 0, 0);
+    this.texture = new THREE.ImageUtils.loadTexture('assets/airplane2b.png');
+    this.material = new THREE.MeshBasicMaterial({ map: this.texture, transparent: true });
+    this.size = 10;
+    this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(this.size, this.size),
+     this.material);
+    this.speed = 20;
+    this.health = 1;
+    this.score = 10;
+    this.fireChance = 0.01;
+    enemies.push(this);
+}
+
+Fighter.prototype = new Enemy();
+
+Fighter.spawn = function(position, direction) {
+    var enemy = new Fighter();
+
+    enemy.position.copy(position);
+
+    enemy.ray = new THREE.Ray(position, direction);
+    enemy.layer = position.z;
+
+    enemy.addToScene();
+    GameObject.prototype.update.call(enemy);
+};
+
+Fighter.prototype.update = function (delta) {
+    var toReturn = true;
+    // should probably have different patterns of enemy behavior here
+    this.position.y += delta * this.speed * this.ray.direction.y * this.layer;
+    this.position.x += delta * this.speed * this.ray.direction.x * this.layer;
+
+    // collide with player
+    if (player.layer == this.layer &&  
+     distance(player.position.x, player.position.y, this.position.x,
+      this.position.y) < this.size * this.layer) {
+        player.health -= 1;
+        playerCrashed = true;
+        toReturn = false;
+    } else if (Math.random() < this.fireChance) {
+        // Fire!
+        var bulletDirection = new THREE.Vector3();
+        bulletDirection.copy(this.ray.direction);
+        Bullet.spawn(this, bulletDirection.normalize(), 100, false);
+    }
+
+    GameObject.prototype.update.call(this);
+
+    return toReturn;
+}
 
 function GlobalState() {
     this.paused = false;

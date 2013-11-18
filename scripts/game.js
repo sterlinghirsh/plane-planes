@@ -189,11 +189,19 @@ function update() {
         if (!globalState.paused) {
             // Change this for increased difficulty.
             var enemySpawnChance = 0.01
+            var fighterChance = 0.2;
             if (Math.random() < enemySpawnChance) {
                 var maxX = WIDTH_HALF / 2 - 20;
                 var randX = maxX - 2 * maxX * Math.random();
                 var layer = Math.round(Math.random() * 3);
-                Bomber.spawn(new THREE.Vector3(randX, HEIGHT_HALF / 1.5, layer), new THREE.Vector3(0, -10, 0));
+
+                if (Math.random() < fighterChance) {
+                    Fighter.spawn(new THREE.Vector3(randX, -HEIGHT_HALF / 1.5, layer),
+                     new THREE.Vector3(0, 1, 0));
+                } else {
+                    Bomber.spawn(new THREE.Vector3(randX, HEIGHT_HALF / 1.5, layer), 
+                     new THREE.Vector3(0, -1, 0));
+                }
             }
             
 
